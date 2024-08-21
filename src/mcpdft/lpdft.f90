@@ -74,8 +74,6 @@ module lpdft
 #include "rasdim.fh"
 #include "general.fh"
 #include "rasscf.fh"
-!For lRf
-!#include "rctfld.fh"
 
       real(kind=wp), dimension(ntot2), intent(in) :: CMO
 
