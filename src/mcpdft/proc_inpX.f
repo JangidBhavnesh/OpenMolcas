@@ -18,6 +18,7 @@
       use UnixInfo, only: SuperName
       use write_pdft_job, only: iwjob, hasHDF5ref
       use mcpdft_output, only: terse, debug, insane, lf, iPrLoc
+      use lpdft, only: do_lpdft
 
 #ifdef module_DMRG
 !     use molcas_dmrg_interface !stknecht: Maquis-DMRG program
@@ -325,6 +326,14 @@
         dogradpdft=.false.
        end if
       End If
+!---  Process LPDF command --------------------------------------------!
+      if(dbg) write(lf,*) ' Check if Linearized PDFT case.'
+      if(keylpdf) then
+        if(dbg) then
+          write(lf,*)' LPDF keyword was used.'
+        end if
+        do_lpdft=.true.
+      endif
 *---  Process WJOB command --------------------------------------------*
       If (DBG) Write(6,*) ' Check if write JOBIPH case.'
       If (KeyWJOB) Then
