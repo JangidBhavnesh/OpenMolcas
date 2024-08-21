@@ -59,6 +59,7 @@
      &                  mspdft_finalize
       use mcpdft_output, only: terse, debug, insane, usual, lf, iPrLoc
       use mspdft_util, only: replace_diag
+      use lpdft, only: do_lpdft, lpdft_kernel
       use rctfld_module
       use stdalloc, only: mma_allocate, mma_deallocate
       use wadr, only: DMAT, PMAT, PA, FockOcc, TUVX, FI, FA, DSPN,
@@ -433,7 +434,11 @@
       ! This is where MC-PDFT actually computes the PDFT energy for
       ! each state
       ! only after 500 lines of nothing above...
-      Call MSCtl(CMO,FI,FA,Work(iRef_E))
+      if(do_lpdft) then
+        call lpdft_kernel(work(lCMO))
+      else
+        Call MSCtl(CMO,FI,FA,Work(iRef_E))
+      end if
 
       ! I guess iRef_E now holds the MC-PDFT energy for each state??
 
