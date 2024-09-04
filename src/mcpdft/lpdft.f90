@@ -14,17 +14,16 @@
 module lpdft
   use stdalloc, only: mma_allocate, mma_deallocate
   use definitions, only: wp, iwp
+  use mcpdft_input, only: mcpdft_options
   use mcpdft_output, only: lf
   implicit none
   private
-  logical :: do_lpdft=.false.
 
   real(kind=wp) :: hconst = 0.0D0
   real(kind=wp), allocatable, dimension(:) :: inactD1
   real(kind=wp), allocatable, dimension(:) :: casd1_0, casd1s_0, casd2_0
   real(kind=wp), allocatable, dimension(:) :: veff1, veff2
 
-  public :: do_lpdft
   public :: lpdft_kernel
   contains
     subroutine lpdft_kernel(CMO)
@@ -110,7 +109,7 @@ module lpdft
       htmp = 0.0D0
       gtmp = 0.0D0
       call DrvXV(htmp, gtmp, d1ao_0, potnuc, nTot1, First, Dff, NonEq, &
-                 lRF, KSDFT_TEMP, ExFac, charge, ispin, inactD1, &
+                 lRF, mcpdft_options%otfnal%otxc, ExFac, charge, ispin, inactD1, &
                  casD1AO_0, nTot1, DFTFOCK, Do_DFT)
 
       ! Load in the on-top potentials

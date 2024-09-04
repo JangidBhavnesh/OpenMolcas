@@ -24,6 +24,7 @@ module mcpdft_input
     logical :: grad = .false.
     logical :: meci = .false.
     logical :: nac = .false.
+    logical :: do_lpdft = .false.
     logical :: is_hdf5_wfn = .false.
     character(len=256) :: wfn_file = ""
 
@@ -128,6 +129,9 @@ contains
 
       case("MECI")
         mcpdft_options%meci = .true.
+
+      case("LPDF")
+        mcpdft_options%do_lpdft = .true.
 
         ! Done with reading input
       case("END ")

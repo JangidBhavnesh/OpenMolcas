@@ -15,7 +15,6 @@
       use mcpdft_input, only: mcpdft_options
       use printlevel, only: terse, debug, insane
       use mcpdft_output, only: lf, iPrLoc
-      use lpdft, only: do_lpdft
 
 #ifdef _HDF5_
       Use mh5, Only: mh5_open_file_r, mh5_exists_attr,
