@@ -31,7 +31,7 @@ subroutine RdMBPT()
 !                                                                      *
 !***********************************************************************
 
-use MBPT2_Global, only: CMO, EOrb, nBas, nDsto, nnB
+use MBPT2_Global, only: CMO, CMO_Internal,EOrb, nBas, nDsto, nnB
 use stdalloc, only: mma_allocate, mma_deallocate
 use Constants, only: Zero
 use Definitions, only: wp, iwp, u6
@@ -72,18 +72,19 @@ end do
 
 call mma_allocate(CMO_t,lthCMO,Label='CMO_t')
 call Get_CMO(CMO_t,lthCMO)
-call mma_allocate(CMO,lthCMO,label='CMO')
+call mma_allocate(CMO_Internal,lthCMO,label='CMO_Internal')
+CMO=>CMO_Internal
 
 ! set MO coefficients of the deleted orbitals to zero
 ! Observe that these are not included at all in the basis
 iStart = 1
 iStart_t = 1
 do iSym=1,nSym
-  call dcopy_(nOrb(iSym)*nBas(iSym),CMO_t(iStart_t),1,CMO(iStart),1)
+  call dcopy_(nOrb(iSym)*nBas(iSym),CMO_t(iStart_t:),1,CMO(iStart:),1)
   iStart = iStart+nOrb(iSym)*nBas(iSym)
   iStart_t = iStart_t+nOrb(iSym)*nBas(iSym)
 
-  call dcopy_((nBas(iSym)-nOrb(iSym))*nBas(iSym),[Zero],0,CMO(iStart),1)
+  call dcopy_((nBas(iSym)-nOrb(iSym))*nBas(iSym),[Zero],0,CMO(iStart:),1)
   iStart = iStart+(nBas(iSym)-nOrb(iSym))*nBas(iSym)
 end do
 call mma_deallocate(CMO_t)
@@ -107,11 +108,11 @@ call mma_allocate(EOrb,lthEOr,label='EOrb')
 iStart = 1
 iStart_t = 1
 do iSym=1,nSym
-  call dcopy_(nOrb(iSym),EOrb_t(iStart_t),1,EOrb(iStart),1)
+  call dcopy_(nOrb(iSym),EOrb_t(iStart_t:),1,EOrb(iStart:),1)
   iStart = iStart+nOrb(iSym)
   iStart_t = iStart_t+nOrb(iSym)
 
-  call dcopy_(nBas(iSym)-nOrb(iSym),[Zero],0,EOrb(iStart),1)
+  call dcopy_(nBas(iSym)-nOrb(iSym),[Zero],0,EOrb(iStart:),1)
   iStart = iStart+nBas(iSym)-nOrb(iSym)
 end do
 call mma_deallocate(EOrb_t)

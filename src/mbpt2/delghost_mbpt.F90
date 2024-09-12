@@ -11,7 +11,7 @@
 
 subroutine DelGHOST_MBPT()
 
-use MBPT2_Global, only: CMO, DelGhost, EOrb, nBas, nDsto, nnB, Thr_ghs
+use MBPT2_Global, only: CMO, CMO_Internal, DelGhost, EOrb, nBas, nDsto, nnB, Thr_ghs
 use stdalloc, only: mma_allocate, mma_deallocate
 use Constants, only: Zero
 use Definitions, only: wp, iwp, u6
@@ -40,10 +40,12 @@ do iSym=1,nSym
   nZero(iSym) = 0
 end do
 
-call move_alloc(CMO,CMO_t)
+call move_alloc(CMO_Internal,CMO_t)
+CMO=>Null()
 call move_alloc(EOrb,EOrb_t)
 
-call mma_allocate(CMO,size(CMO_t),label='CMO')
+call mma_allocate(CMO_Internal,size(CMO_t),label='CMO')
+CMO=>CMO_Internal
 call mma_allocate(EOrb,size(EOrb_t),label='EOrb')
 
 write(u6,'(A)') '-------------------------------------------------------'
@@ -73,11 +75,11 @@ write(u6,'(A,8I4)')
 iStart = 1
 iStart_t = 1
 do iSym=1,nSym
-  call dcopy_(nOrb(iSym)*nBas(iSym),CMO_t(iStart_t),1,CMO(iStart),1)
+  call dcopy_(nOrb(iSym)*nBas(iSym),CMO_t(iStart_t:),1,CMO(iStart:),1)
   iStart = iStart+nOrb(iSym)*nBas(iSym)
   iStart_t = iStart_t+nOrb(iSym)*nBas(iSym)
 
-  call dcopy_((nBas(iSym)-nOrb(iSym))*nBas(iSym),[Zero],0,CMO(iStart),1)
+  call dcopy_((nBas(iSym)-nOrb(iSym))*nBas(iSym),[Zero],0,CMO(iStart:),1)
   iStart = iStart+(nBas(iSym)-nOrb(iSym))*nBas(iSym)
 end do
 call mma_deallocate(CMO_t)
@@ -87,11 +89,11 @@ call mma_deallocate(CMO_t)
 iStart = 1
 iStart_t = 1
 do iSym=1,nSym
-  call dcopy_(nOrb(iSym),EOrb_t(iStart_t),1,EOrb(iStart),1)
+  call dcopy_(nOrb(iSym),EOrb_t(iStart_t:),1,EOrb(iStart:),1)
   iStart = iStart+nOrb(iSym)
   iStart_t = iStart_t+nOrb(iSym)
 
-  call dcopy_(nBas(iSym)-nOrb(iSym),[Zero],0,EOrb(iStart),1)
+  call dcopy_(nBas(iSym)-nOrb(iSym),[Zero],0,EOrb(iStart:),1)
   iStart = iStart+nBas(iSym)-nOrb(iSym)
 end do
 call mma_deallocate(EOrb_t)
