@@ -29,7 +29,7 @@ module lpdft
     subroutine lpdft_kernel(CMO)
 #include "rasdim.fh"
 #include "general.fh"
-#include "rasscf.fh"
+!#include "rasscf.fh"
       real(kind=wp), dimension(ntot2), intent(in) :: CMO
       call init_vars(CMO)
 
@@ -45,7 +45,7 @@ module lpdft
     subroutine get_zero_order_densities(casd1_0, casd1s_0, casd2_0)
 #include "rasdim.fh"
 #include "general.fh"
-#include "rasscf.fh"
+!#include "rasscf.fh"
       real(kind=wp), dimension(nacpar), intent(out) :: casd1_0, casd1s_0
       real(kind=wp), dimension(nacpr2), intent(out) :: casd2_0
 
@@ -72,7 +72,7 @@ module lpdft
       use rctfld_module, only: lRF
 #include "rasdim.fh"
 #include "general.fh"
-#include "rasscf.fh"
+!#include "rasscf.fh"
 
       real(kind=wp), dimension(ntot2), intent(in) :: CMO
 
@@ -121,7 +121,7 @@ module lpdft
     subroutine compute_hconst()
 #include "rasdim.fh"
 #include "general.fh"
-#include "rasscf.fh"
+!#include "rasscf.fh"
       real(kind=wp) :: hnuc
       integer(kind=iwp) :: i
 
@@ -144,7 +144,7 @@ module lpdft
       ! weird jobiph/jobold looking.
 #include "rasdim.fh"
 #include "general.fh"
-#include "rasscf.fh"
+!#include "rasscf.fh"
       logical :: found
       integer :: iad15
 
@@ -169,7 +169,7 @@ module lpdft
     subroutine init_vars(CMO)
 #include "rasdim.fh"
 #include "general.fh"
-#include "rasscf.fh"
+!#include "rasscf.fh"
       real(kind=wp), dimension(ntot2) :: CMO
 
       call mma_allocate(casd1_0, nacpar, "CASD1_0")

@@ -14,12 +14,12 @@ subroutine Alaska_Super_Driver(iRC)
 use Alaska_Info, only: Auto, DefRoot, ForceNAC, iRlxRoot
 use Para_Info, only: nProcs
 use NAC, only: isNAC, NACStates
+use spool, only: SpoolInp
 use stdalloc, only: mma_allocate, mma_deallocate
 use Definitions, only: wp, iwp, u6
 
 implicit none
 integer(kind=iwp), intent(out) :: iRC
-#include "warnings.h"
 integer(kind=iwp) :: Columbus, iGo, iMp2Prpt, iPL, iReturn, istatus, LuInput, LuSpool, LuSpool2, nGrad, nsAtom, nSym
 logical(kind=iwp) :: Do_Cholesky, Numerical, Do_DF, Do_ESPF, StandAlone, Exists, Do_Numerical_Cholesky, Do_1CCD, MCLR_Ready
 character(len=180) :: Line
@@ -30,6 +30,8 @@ character(len=8) :: Method
 real(kind=wp), allocatable :: Grad(:)
 integer(kind=iwp), external :: iPrintLevel, isFreeUnit
 logical(kind=iwp), external :: Reduce_Prt
+
+#include "warnings.h"
 
 !                                                                      *
 !***********************************************************************

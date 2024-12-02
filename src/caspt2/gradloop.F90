@@ -19,22 +19,19 @@ Subroutine GradLoop(Heff,Ueff,H0,U0,H0Sav)
 ! in the first loop (for energy) and are restored in the second loop
 ! below (by calling SavGradParams)
 !
-  use caspt2_output, only: iPrGlb
-  use caspt2_gradient, only: do_grad, IDSAVGRD, iStpGrd
+  use caspt2_global, only: iPrGlb
+  use caspt2_global, only: do_grad, IDSAVGRD, iStpGrd
   use PrintLevel, only: usual, verbose
   use definitions, only: iwp,wp,u6
+  use EQSOLV
+  use ChoCASPT2
 
   Implicit None
 
-#include "rasdim.fh"
 #include "warnings.h"
 #include "caspt2.fh"
 #include "pt2_guga.fh"
 #include "intgrl.fh"
-#include "eqsolv.fh"
-#include "chocaspt2.fh"
-#include "stdalloc.fh"
-#include "caspt2_grad.fh"
 
   character(len=60) :: STLNE2
 
@@ -93,8 +90,8 @@ Subroutine GradLoop(Heff,Ueff,H0,U0,H0Sav)
       JSTATE = JSTATE_OFF + ISTATE
 
       CALL TIMING(CPTF0,CPE,TIOTF0,TIOE)
-      !CALL STINI
-      CALL RHS_INIT !! somehow
+      !CALL STINI()
+      CALL RHS_INIT() !! somehow
       Call SavGradParams(2,IDSAVGRD)
       Call SavGradParams2(2,UEFF,U0,H0)
       If ((IFXMS .and. IFDW) .OR. IFRMS) Call DCopy_(nState*nState,H0Sav,1,H0,1)

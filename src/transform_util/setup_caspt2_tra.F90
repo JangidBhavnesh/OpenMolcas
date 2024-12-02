@@ -17,14 +17,13 @@
 subroutine SetUp_CASPT2_Tra(nSym_,nBas_,nOrb_,nIsh_,nAsh_,nFro_,nDel_,CMO,lthCMO,LuIntM_,LuHlf1_,LuHlf2_,LuHlf3_)
 
 use Symmetry_Info, only: Mul_SI => Mul
-use caspt2_data, only: CMOp => CMO
+use caspt2_global, only: CMOp => CMO, LUHLF1, LUHLF2, LUHLF3, LUINTM, NCMO
 use Definitions, only: wp, iwp
 
 implicit none
 integer(kind=iwp), intent(in) :: nSym_, nBas_(8), nOrb_(8), nIsh_(8), nAsh_(8), nFro_(8), nDel_(8), lthCMO, LuIntM_
 real(kind=wp), target, intent(in) :: CMO(lthCMO)
 integer(kind=iwp), intent(inout) :: LuHlf1_, LuHlf2_, LuHlf3_
-#include "rasdim.fh"
 #include "caspt2.fh"
 
 !                                                                      *

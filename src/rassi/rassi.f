@@ -19,52 +19,54 @@
       use kVectors
       use frenkel_global_vars, only: doCoul, eNucB, vNucB, nh1, aux2,
      &                               doExcitonics
-      use Symmetry_Info, only: nIrrep
+      use Symmetry_Info, only: nSym=>nIrrep, Symmetry_Info_Free
       use Basis_Info, only: nBas
 #ifdef _HDF5_
       use Dens2HDF5
       use mh5, only: mh5_put_dset
+      use RASSIWfn, only: wfn_overlap
 #endif
 #ifdef _DMRG_
       use qcmaquis_interface_cfg
       use qcmaquis_interface, only: qcmaquis_interface_deinit
       use qcmaquis_info, only : qcmaquis_info_deinit
-      use rasscf_data, only: doDMRG
+      use rasscf_global, only: doDMRG
 #endif
       use Fock_util_global, only: Fake_CMO2
       use mspt2_eigenvectors, only : deinit_mspt2_eigenvectors
       use Data_Structures
+      use cntrl, only: SONTOSTATES, SONATNSTATE
+      use stdalloc, only: mma_allocate, mma_deallocate
+      use Cntrl, only: NSTATE, DYSO, NJOB, TRACK, ONLY_OVERLAPS,
+     &                 IFHAM, DYSEXPORT, NATO, BINA, IFSO, HOP, DQVD,
+     &                 Do_SK, SaveDens, MLTPLT, NPROP
+      use cntrl, only: LuExc, LuOne, LuTDM
 
-      IMPLICIT REAL*8 (A-H,O-Z)
+
+      IMPLICIT None
 C Matrix elements over RAS wave functions.
 C RAS state interaction.
+! pick up MxRoot
 #include "rasdim.fh"
-#include "cntrl.fh"
-#include "Files.fh"
-#include "Morsel.fh"
-#include "SysDef.fh"
 #include "rassi.fh"
-#include "jobin.fh"
-#include "symmul.fh"
-#include "rassiwfn.fh"
-#include "stdalloc.fh"
       Logical CLOSEONE
-      INTEGER IRC
+      INTEGER IRC, IRETURN, IOPT, NZ, ISY, NZCOUL, IDISK, JOB1, JOB2,
+     &        ISTATE, J, NSS, JOB, MPLET, I
+      INTEGER, External :: IPRINTLEVEL
       Real*8, Allocatable:: USOR(:,:),
      &                      USOI(:,:), OVLP(:,:), DYSAMPS(:,:),
      &                      ENERGY(:), DMAT(:), TDMZZ(:),
      &                      VNAT(:),OCC(:), SOENE(:)
-      integer, allocatable:: IDDET1(:), IDDET2(:)
 *                                                                      *
 ************************************************************************
 *                                                                      *
-*     Prolouge
+*     Prologue
 *
       IRETURN=20
 
       Call StatusLine('RASSI:','Starting calculation')
 
-      CALL GETPRINTLEVEL
+      CALL GETPRINTLEVEL()
 
 
 C Greetings. Default settings. Initialize data sets.
@@ -84,7 +86,7 @@ C Read and check keywords etc. from stdin. Print out.
       CALL INPCTL_RASSI()
 
 CSVC: prepare HDF5 wavefunction file
-      CALL CRE_RASSIWFN
+      CALL CRE_RASSIWFN()
 
 C--------  RAS wave function section --------------------------
 C First, in a double loop over the states, compute any matrix
@@ -121,7 +123,7 @@ C Number of basis functions
         else
           call NameRun('AUXRFIL1')
         end if
-        call get_iArray('nBas', nBas, nIrrep)
+        call get_iArray('nBas', nBas, nSym)
         NZcoul = nBas(0)
         nh1 = NZcoul*(NZcoul+1)/2
         call mma_allocate(vNucB, nh1, Label='Attr PotB')
@@ -130,9 +132,6 @@ C Number of basis functions
       end if
 
 C Loop over jobiphs:
-      Call mma_allocate(IDDET1,nState,Label='IDDET1')
-      Call mma_allocate(IDDET2,nState,Label='IDDET2')
-
       IDISK=0  ! Initialize disk address for TDMs.
       DO JOB1=1,NJOB
         DO JOB2=1,JOB1
@@ -140,12 +139,9 @@ C Loop over jobiphs:
         Fake_CMO2 = JOB1.eq.JOB2  ! MOs1 = MOs2  ==> Fake_CMO2=.true.
 
 C Compute generalized transition density matrices, as needed:
-          CALL GTDMCTL(PROP,JOB1,JOB2,OVLP,DYSAMPS,NZ,IDDET1,
-     &                 IDDET2,IDISK)
+          CALL GTDMCTL(PROP,JOB1,JOB2,OVLP,DYSAMPS,NZ,IDISK)
         END DO
       END DO
-      Call mma_deallocate(IDDET1)
-      Call mma_deallocate(IDDET2)
 
 #ifdef _HDF5_
       CALL mh5_put_dset(wfn_overlap,OVLP,[NSTATE,NSTATE],[0,0])
@@ -278,7 +274,7 @@ C Make the SO Dyson orbitals and amplitudes from the SF ones
          CALL SODYSORB(NSS,USOR,USOI,DYSAMPS,NZ,SOENE)
       END IF
 
-      IF (Allocated(SFDYS)) Call mma_deallocate(SFDYS)
+      Call mma_deallocate(SFDYS,safe='*')
 ! +++
 
       CALL PRPROP(PROP,USOR,USOI,SOENE,NSS,OVLP,
@@ -287,13 +283,9 @@ C Make the SO Dyson orbitals and amplitudes from the SF ones
 
 C Plot SO-Natural Orbitals if requested
 C Will also handle mixing of states (sodiag.f)
-      IF(SONATNSTATE.GT.0) THEN
-        CALL DO_SONATORB(NSS,USOR,USOI)
-      END IF
+      IF(SONATNSTATE.GT.0) CALL DO_SONATORB(NSS,USOR,USOI)
 C Plot SO-Natural Transition Orbitals if requested
-      IF(SONTOSTATES.GT.0) THEN
-        CALL DO_SONTO(NSS,USOR,USOI)
-      END IF
+      IF(SONTOSTATES.GT.0) CALL DO_SONTO(NSS,USOR,USOI)
 
       Call mma_deallocate(USOR)
       Call mma_deallocate(USOI)
@@ -331,7 +323,7 @@ C Plot SO-Natural Transition Orbitals if requested
 *                                                                      *
 ************************************************************************
 *                                                                      *
-*     EPILOUGE                                                         *
+*     EPILOGUE                                                         *
 *                                                                      *
 ************************************************************************
 *                                                                      *
@@ -394,12 +386,13 @@ C Plot SO-Natural Transition Orbitals if requested
 *
       IF (SaveDens) Then
          Call DaClos(LuTDM)
-         If (Allocated(JOB_INDEX)) Call mma_deallocate(JOB_INDEX)
-         If (Allocated(CMO1)) Call mma_deallocate(CMO1)
-         If (Allocated(CMO2)) Call mma_deallocate(CMO2)
-         If (Allocated(DMAB)) Call mma_deallocate(DMAB)
+         Call mma_deallocate(JOB_INDEX,safe='*')
+         Call mma_deallocate(CMO1,safe='*')
+         Call mma_deallocate(CMO2,safe='*')
+         Call mma_deallocate(DMAB,safe='*')
       End If
       Call DaClos(LuExc)
+      Call Symmetry_Info_Free()
 *                                                                      *
 ************************************************************************
 *                                                                      *

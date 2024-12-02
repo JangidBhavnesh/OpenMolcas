@@ -711,31 +711,31 @@ contains
 
       case ('GRAD')
         call WarningMessage(2,'Obsolete keyword: '//Command)
-        call Quit_OnUserError
+        call Quit_OnUserError()
 
       case ('NOTR')
         call WarningMessage(2,'Obsolete keyword: '//Command)
-        call Quit_OnUserError
+        call Quit_OnUserError()
 
       case ('JACO')
         call WarningMessage(2,'Obsolete keyword: '//Command)
-        call Quit_OnUserError
+        call Quit_OnUserError()
 
       case ('EXTR')
         call WarningMessage(2,'Obsolete keyword: '//Command)
-        call Quit_OnUserError
+        call Quit_OnUserError()
 
       case ('QLQR')
         call WarningMessage(2,'Obsolete keyword: '//Command)
-        call Quit_OnUserError
+        call Quit_OnUserError()
 
       case ('NATU')
         call WarningMessage(2,'Obsolete keyword: '//Command)
-        call Quit_OnUserError
+        call Quit_OnUserError()
 
       case ('MOLO')
         call WarningMessage(2,'Obsolete keyword: '//Command)
-        call Quit_OnUserError
+        call Quit_OnUserError()
 
         ! DONE WITH READING INPUT
 
@@ -746,7 +746,7 @@ contains
 
       case Default
         call WarningMessage(2,'Unrecognized keyword: '//Command)
-        call Quit_OnUserError
+        call Quit_OnUserError()
 
       end select
 
@@ -776,13 +776,13 @@ contains
 
   subroutine CleanUp_Input()
     if (allocated(Input)) then
-      if (allocated(Input%MultGroup%State)) call mma_deallocate(Input%MultGroup%State)
-      if (allocated(Input%XMulGroup%State)) call mma_deallocate(Input%XMulGroup%State)
-      if (allocated(Input%RMulGroup%State)) call mma_deallocate(Input%RMulGroup%State)
-      if (allocated(Input%NamFro)) call mma_deallocate(Input%NamFro)
-      if (allocated(Input%nFro)) call mma_deallocate(Input%nFro)
-      if (allocated(Input%nDel)) call mma_deallocate(Input%nDel)
-      if (allocated(Input%Heff)) call mma_deallocate(Input%Heff)
+      call mma_deallocate(Input%MultGroup%State,safe='*')
+      call mma_deallocate(Input%XMulGroup%State,safe='*')
+      call mma_deallocate(Input%RMulGroup%State,safe='*')
+      call mma_deallocate(Input%NamFro,safe='*')
+      call mma_deallocate(Input%nFro,safe='*')
+      call mma_deallocate(Input%nDel,safe='*')
+      call mma_deallocate(Input%Heff,safe='*')
       ! The input structure itself is a scalar, allocated outside mma
       deallocate(Input)
     end if
@@ -793,7 +793,7 @@ contains
 
     call WarningMessage(2,'I/O error when reading line.')
     write (u6,*) 'Last line read from input: ',line
-    call Quit_OnUserError
+    call Quit_OnUserError()
   end subroutine IOError
 
   subroutine EOFError(line)
@@ -801,7 +801,7 @@ contains
 
     call WarningMessage(2,'Premature end of input file.')
     write (u6,*) 'Last line read from input: ',line
-    call Quit_OnUserError
+    call Quit_OnUserError()
   end subroutine EOFError
 
   subroutine StatesError(line)
@@ -809,7 +809,7 @@ contains
 
     call WarningMessage(2,'Number of XMULT or RMULT states must be > 1.')
     write (u6,*) 'Last line read from input: ',line
-    call Quit_OnUserError
+    call Quit_OnUserError()
   end subroutine StatesError
 
   subroutine MultError(line)
@@ -817,7 +817,7 @@ contains
 
     call WarningMessage(2,'Number of MULT states must be > 0.')
     write (u6,*) 'Last line read from input: ',line
-    call Quit_OnUserError
+    call Quit_OnUserError()
   end subroutine MultError
 
 end module InputData

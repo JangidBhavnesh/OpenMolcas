@@ -16,7 +16,6 @@
 * ****************************************************************
       subroutine RHS_CMS(Fock,CICSF)
       use stdalloc, only : mma_allocate, mma_deallocate
-*#include "stdalloc.fh"
 #include "Input.fh"
 #include "disp_mclr.fh"
 #include "Pointers.fh"
@@ -131,7 +130,6 @@
 ******Rewritten from mcpdft/alloc.f
       INTEGER NPUVX
       INTEGER iSp,iSq,iSr,iSs,nAq,iSpq,iSpqr,nAr,nAs,nOp
-#include "stdalloc.fh"
 #include "Input.fh"
 #include "disp_mclr.fh"
 #include "Pointers.fh"
@@ -321,10 +319,10 @@
 ******************************************************
       Subroutine CMSRHSGDMat(GDMat)
       use ipPage, only: W
+      use stdalloc, only: mma_allocate, mma_deallocate
 #include "Pointers.fh"
 #include "Input.fh"
 #include "Files_mclr.fh"
-#include "stdalloc.fh"
 #include "detdim.fh"
 #include "cicisp_mclr.fh"
 *      Input
@@ -507,8 +505,8 @@
       INTEGER nTri
       Real*8,DIMENSION(nRoots*nTri)::FMO1t
       Real*8,DIMENSION(nRoots*NACPR2)::FMO2t
-      CALL Get_DArray('F1MS            ',FMO1t,nRoots*nTri  )
-      CALL Get_DArray('F2MS            ',FMO2t,nRoots*NACPR2)
+      CALL Get_DArray('F1_PDFT         ',FMO1t,nRoots*nTri  )
+      CALL Get_DArray('F2_PDFT         ',FMO2t,nRoots*NACPR2)
       RETURN
       end subroutine
 ******************************************************

@@ -18,32 +18,53 @@
       use kVectors
       use Lebedev_quadrature, only: available_table, rule_max
 #ifdef _DMRG_
-      use rasscf_data, only: doDMRG
+      use rasscf_global, only: doDMRG
       use qcmaquis_interface_cfg
 #endif
       use Fock_util_global, only: Deco, Estimate, PseudoChoMOs, Update
       use Cholesky, only: timings
+      use stdalloc, only: mma_allocate
+      use cntrl, only: SONTO, SONTOSTATES,
+     &                      SONAT, SONATNSTATE,
+     &                      SODIAG,SODIAGNSTATE
+      use spool, only: Spoolinp, Close_LuSpool
+      use Cntrl, only: QDPT2SC, QDPT2EV, SECOND_TIME, DOGSOR, PRSXY,
+     &                 PRORB, PRTRA, PRCI, BINA, NATO, NBINA, NRNATO,
+     &                 RFPERT, IFTRD1, NSOPR, NPROP, PRDIPVEC, TDIPMIN,
+     &                 NJOB, CIH5, CIThr, IFHAM, IFSO, IFNTO, SOThr_Prt,
+     &                 nSOThr_Prt, nState, IfHEXT, IfHEff, IfHCOM,
+     &                 IFEJOB, IfHDia, IfShft, ToFile, IfJ2, IfJZ,
+     &                 IFGCAL, EPraThr, IFACALSD, IFACALFC, IFACALSDON,
+     &                 IFACALPSO, IFATCALSA, IFGTSHSA, MULTIP,
+     &                 IFVANVLECK, TMINS, TMAXS, NTS, IFSONCINI, TMINP,
+     &                 TMAXP, NTP, IFSONCIFC, TMINF, TMAXF, NTF, NOSO,
+     &                 IFCURD, IFARGU, IFXCAL, NBSTEP, BSTART, BINCRE,
+     &                 BANGRES, NTSTEP, TSTART, TINCRE, IFMCAL, PRXVR,
+     &                 PRXVE, PRXVS, PRMER, PRMEE, PRMES, HOP, TRACK,
+     &                 NOHAM, ONLY_OVERLAPS, IFDCPL, IFTRD2, IFTDM,
+     &                 DQVD, ALPHZ, BETAE, DIPR, OSTHR_DIPR, QIPR,
+     &                 OSTHR_QIPR, QIALL, RSPR, RSThr, DOCD, DYSO,
+     &                 DYSEXPORT, DYSEXPSO, TDYS, OCAN, DCHS, DCHO,
+     &                 DO_TMOM, TMGR_Thrs, PRRAW, PRWEIGHT, TOLERANCE,
+     &                 REDUCELOOP, LOOPDIVIDE, l_Eff, Do_SK, Do_Pol,
+     &                 RHODYN, MXJOB, JBNAME, SOPRNM, PNAME, PRDIPCOM,
+     &                 EPrThr, LPRPR, lHami, IfACAL, IFACALFCON,
+     &                 IFACALFCSDON, IFGTCALSA, DYSEXPSF, ISTAT,
+     &                 MXPROP, NSTAT, IBINA, ISOCMP, ICOMP, OCAA
+      use cntrl, only: ALGO, Nscreen, dmpk
 
       IMPLICIT NONE
-#include "rasdim.fh"
 #include "rassi.fh"
-#include "cntrl.fh"
-#include "jobin.fh"
-#include "WrkSpc.fh"
-#include "stdalloc.fh"
-      CHARACTER*80 LINE
-      INTEGER MXPLST
-      PARAMETER (MXPLST=50)
-      CHARACTER*8 TRYNAME
+      CHARACTER(LEN=80) LINE
+      INTEGER, PARAMETER :: MXPLST=50
+      CHARACTER(LEN=8) TRYNAME
       Real*8 tmp
       Logical lExists
-#include "chorassi.fh"
       Integer I, J, ISTATE, JSTATE, IJOB, ILINE, LINENR
       Integer LuIn
       Integer NFLS
 
       character(len=7) :: input_id = '&RASSI '
-
 
       Call SpoolInp(LuIn)
 
@@ -130,17 +151,6 @@ C ------------------------------------------
         LINENR=LINENR+1
         GOTO 100
       END IF
-C-------------------------------------------
-CTL2004-start
-C-------------------------------------------
-      IF (LINE(1:4).EQ.'NONA') THEN
-         NONA=.TRUE.
-        Read(LuIn,*,ERR=997)NONA_ISTATE, NONA_JSTATE
-        LINENR=LINENR+1
-        GOTO 100
-      END IF
-C-------------------------------------------
-CTL2004-end
 C-------------------------------------------
       IF(LINE(1:4).EQ.'RFPE') THEN
         RFPERT=.TRUE.
@@ -326,6 +336,7 @@ C ------------------------------------------
         IFSO=.TRUE.
         GOTO 100
       END IF
+C ------------------------------------------
       IF(LINE(1:4).EQ.'NTOC') THEN
         IFNTO=.TRUE.
         GOTO 100
@@ -573,20 +584,20 @@ c Kamal Sharkas end - PSO Hyperfine calculations
 c BP Natural orbitals options
       If(Line(1:4).eq.'SONO') then
         Read(LuIn,*,ERR=997) SONATNSTATE
-        CALL GETMEM('SONATS','ALLO','INTE',LSONAT,SONATNSTATE)
+        CALL mma_allocate(SONAT,SONATNSTATE,Label='SONAT')
         Linenr=Linenr+1
         DO ILINE=1,SONATNSTATE
-          Read(LuIn,*,ERR=997) IWORK(LSONAT-1+ILINE)
+          Read(LuIn,*,ERR=997) SONAT(ILINE)
           Linenr=Linenr+1
         END DO
         GoTo 100
       Endif
       If(Line(1:4).eq.'SODI') then
         Read(LuIn,*,ERR=997) SODIAGNSTATE
-        CALL GETMEM('SODIAG','ALLO','INTE',LSODIAG,SODIAGNSTATE)
+        CALL mma_allocate(SODIAG,SODIAGNSTATE,Label='SODIAG')
         Linenr=Linenr+1
         DO ILINE=1,SODIAGNSTATE
-          Read(LuIn,*,ERR=997) IWORK(LSODIAG-1+ILINE)
+          Read(LuIn,*,ERR=997) SODIAG(ILINE)
           Linenr=Linenr+1
         END DO
         GoTo 100
@@ -605,10 +616,10 @@ c END BP OPTIONS
 c RF SO-NTO
       If(line(1:4).eq.'SONT') then
         read(LuIn,*,ERR=997) SONTOSTATES
-        CALL GETMEM('SONTO','ALLO','INTE',LSONTO,2*SONTOSTATES)
+        CALL mma_allocate(SONTO,2,SONTOSTATES,Label='SONTO')
         linenr=linenr+1
         do ILINE=1,SONTOSTATES
-          read(LuIn,*,ERR=997) (iwork(LSONTO+J-1),J=ILINE*2-1,ILINE*2)
+          read(LuIn,*,ERR=997) SONTO(1,ILINE),SONTO(2,ILINE)
           linenr=linenr+1
         enddo
         goto 100
@@ -704,6 +715,12 @@ C--------------------------------------------
       IF(Line(1:4).eq.'TRD2') THEN
         IFTRD1=.TRUE.
         IFTRD2=.TRUE.
+        LINENR=LINENR+1
+        GOTO 100
+      ENDIF
+C--------------------------------------------
+      IF(Line(1:3).eq.'TDM') THEN
+        IFTDM=.TRUE.
         LINENR=LINENR+1
         GOTO 100
       ENDIF

@@ -36,6 +36,7 @@ use RICD_Info, only: Cho_OneCenter, Chol => Cholesky, Do_DCCD, Do_RI
 use Cholesky, only: Cho_1Center
 use Symmetry_Info, only: nIrrep, VarR, VarT
 use rctfld_module, only: lLangevin, lRF, nPCM_Info, PCM
+use spool, only: Close_LuSpool, Spoolinp
 use stdalloc, only: mma_allocate, mma_deallocate
 use Definitions, only: wp, iwp
 
@@ -254,7 +255,7 @@ call Put_iScalar('Saddle Iter',iter_S)
 !***********************************************************************
 !                                                                      *
 call ClsSew()
-if (allocated(AdCell)) call mma_deallocate(AdCell)
+call mma_deallocate(AdCell,safe='*')
 call mma_deallocate(Coor_MPM)
 call mma_deallocate(Chrg)
 call mma_deallocate(Mass)

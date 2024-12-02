@@ -358,7 +358,7 @@ if (l_casdft) then
                     mRho,nMOs,CMO,nCMO,TabSO,lft,P2MOCube,P2MOCubex,P2MOCubey,P2MOCubez,nPMO3p,MOs,MOx,MOy,MOz)
   end if
 
-  call TranslateDens(P2_OnTop,dRho_dr,P2_OnTop_d,l_tanhr,mGrid,nP2_OnTop,ndRho_dR,nGrad_Eff,Do_Grad)
+  call TranslateDens(P2_OnTop,dRho_dr,P2_OnTop_d,Weights,l_tanhr,mGrid,nP2_OnTop,ndRho_dR,nGrad_Eff,Do_Grad)
 
   call mma_deallocate(P2MOCube)
   call mma_deallocate(P2MOCubex)
@@ -548,9 +548,9 @@ subroutine Terminate()
     call mma_deallocate(RhoI)
     call mma_deallocate(RhoA)
   end if
-  if (allocated(iBfn_Index)) call mma_deAllocate(iBfn_Index)
-  if (allocated(Grid_AO)) call mma_deAllocate(Grid_AO)
-  if (allocated(Dens_AO)) call mma_deAllocate(Dens_AO)
+  call mma_deAllocate(iBfn_Index,safe='*')
+  call mma_deAllocate(Grid_AO,safe='*')
+  call mma_deAllocate(Dens_AO,safe='*')
 
 end subroutine Terminate
 

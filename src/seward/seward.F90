@@ -54,13 +54,13 @@ use Embedding_Global, only: embPot, embPotInBasis
 #endif
 use Gateway_global, only: Fake_ERIs, G_Mode, GS_Mode, iPack, Onenly, Primitive_Pass, PrPrt, Run_Mode, S_Mode, Test
 use Integral_interfaces, only: Int_PostProcess, int_wrout
+use spool, only: Close_LuSpool, Spoolinp
 use stdalloc, only: mma_allocate, mma_deallocate
 use Constants, only: Zero
 use Definitions, only: wp, iwp, u6
 
 implicit none
 integer(kind=iwp), intent(out) :: ireturn
-#include "warnings.h"
 #include "print.fh"
 integer(kind=iwp) :: i, iOpt, iRC, iRout, Lu_One, LuSpool, MaxDax, nChoV(8), nDiff, nDNA
 real(kind=wp) :: ChFracMem, DiagErr(4), Dummy(2), TCpu1, TCpu2, TWall1, Twall2
@@ -77,6 +77,8 @@ interface
     integer(kind=MOLCAS_C_INT) :: nDNA
   end subroutine get_genome
 end interface
+
+#include "warnings.h"
 
 !                                                                      *
 !***********************************************************************
@@ -367,7 +369,7 @@ if (.not. Test) then
 
         Int_PostProcess => Integral_WrOut2
         call Drv2El(Zero)
-        Int_PostProcess => null()
+        nullify(Int_PostProcess)
 
         call Sort1B()
         call Sort2()
@@ -397,7 +399,7 @@ end if     ! Test
 ! corruption of the memory.
 
 call ClsSew()
-if (allocated(AdCell)) call mma_deallocate(AdCell)
+call mma_deallocate(AdCell,safe='*')
 call mma_deallocate(Coor_MPM)
 call mma_deallocate(Chrg)
 call mma_deallocate(Mass)

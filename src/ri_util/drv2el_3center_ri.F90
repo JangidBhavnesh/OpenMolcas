@@ -45,7 +45,7 @@ use Symmetry_Info, only: nIrrep
 use RI_glob, only: iShij, iSSOff, klS, Lu_Q, nBasSh, nChV, nSkal_Valence, nSO, ShlSO, SOShl
 use Int_Options, only: iTOffs
 use Integral_Interfaces, only: Int_PostProcess, int_wrout
-use stdalloc, only: mma_allocate, mma_deallocate
+use stdalloc, only: mma_allocate, mma_deallocate, mma_maxDBLE
 use Constants, only: Zero
 use Definitions, only: wp, iwp, u6
 
@@ -420,7 +420,7 @@ call mma_deallocate(TMax_Valence)
 !                                                                      *
 ! Terminate integral environment.
 
-Int_PostProcess => null()
+nullify(Int_PostProcess)
 call Term_Ints()
 
 call mma_deallocate(iSSOff)

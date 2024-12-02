@@ -55,7 +55,7 @@ use Breit, only: nOrdOp
 use UnixInfo, only: SuperName
 #endif
 use Constants, only: Zero
-use stdalloc, only: mma_allocate
+use stdalloc, only: mma_allocate, mma_maxDBLE
 use Definitions, only: wp, iwp
 
 implicit none
@@ -361,8 +361,7 @@ do iBasAO=1,iBasi,iBsInc
     end do
   end do
 end do
-SOInt => null()
-AOInt => null()
+nullify(SOInt,AOInt)
 call Destroy_BraKet()
 !                                                                      *
 !***********************************************************************
@@ -392,8 +391,7 @@ subroutine ReSort_Int(IntRaw,nijkl,nComp,nA)
 
   IntOut(:,:) = IntIn(:,:)+IntIn(:,4,:)+IntIn(:,6,:)
 
-  nullify(IntIn)
-  nullify(IntOut)
+  nullify(IntIn,IntOut)
 
 end subroutine ReSort_Int
 #endif

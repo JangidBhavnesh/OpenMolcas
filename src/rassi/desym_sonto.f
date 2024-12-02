@@ -21,27 +21,30 @@
 *
 *                                                      -RF 8/24,2021
       SUBROUTINE DESYM_SONTO(A,SIZA,B,SYMLAB)
-      IMPLICIT REAL*8 (A-H,O-Z)
-#include "Molcas.fh"
-#include "cntrl.fh"
-#include "WrkSpc.fh"
-#include "symmul.fh"
+      use stdalloc, only: mma_allocate, mma_deallocate
+      use Symmetry_Info, only: nSym=>nIrrep, MUL
+      IMPLICIT None
 #include "rassi.fh"
       INTEGER SIZA,SYMLAB
-      REAL*8 ME
       REAL*8 A(SIZA)
       REAL*8 B(NBST**2)
 
-c Initialize
-      Call DCOPY_(NBST**2,[0.0D0],0,B,1)
+      REAL*8 ME
+      REAL*8, Allocatable:: SCR(:)
+      INTEGER ITD, IOF, ISY1, NB1, ISY2, NB2, ISY12_MA, I, J, IJ,
+     &        ISY12_MA_BI, NB1_I, NB1_F, NB2_I, NB2_F, JI
+      REAL*8 TDM
 
-      Call GETMEM('SCR','ALLO','REAL',LSCR,SIZA)
-      Call DCOPY_(SIZA,[0.0D00],0,WORK(LSCR),1)
+c Initialize
+      B(:)=0.0D0
+
+      Call mma_allocate(SCR,SIZA,Label='SCR')
+      SCR(:)=0.0D0
 
 c Diagonal symmetry blocks.
 c Dont need to do anything, just leave it be
       IF(SYMLAB.EQ.1) THEN
-        Call DCOPY_(SIZA,A(:),1,WORK(LSCR),1)
+        Call DCOPY_(SIZA,A(:),1,SCR,1)
 c Non-diagonal symmetry blocks
 c note that only half of the total matrix has been stored
       ELSE
@@ -60,7 +63,7 @@ c note that only half of the total matrix has been stored
                     ITD=ITD+1
                     TDM=A(ITD)
                     IJ=IOF+J+NB2*(I-1)
-                    WORK(LSCR-1+IJ)=TDM
+                    SCR(IJ)=TDM
                   Enddo
                 Enddo
                 IOF=IOF+NB1*NB2
@@ -89,7 +92,7 @@ c Expand into C1
               Do I=NB1_i+1,NB1_f
                 If(I.LE.J) then
                   ITD=ITD+1
-                  ME=WORK(LSCR-1+ITD)
+                  ME=SCR(ITD)
                   IJ=I+NBST*(J-1)
                   JI=J+NBST*(I-1)
                   B(IJ)=ME
@@ -102,6 +105,6 @@ c Expand into C1
         Enddo
         NB1_i=NB1_i+NB1
       Enddo
-      Call GETMEM('SCR','FREE','REAL',LSCR,SIZA)
+      Call mma_deallocate(SCR)
 
-      END
+      END SUBROUTINE DESYM_SONTO

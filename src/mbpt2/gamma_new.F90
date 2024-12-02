@@ -14,7 +14,7 @@ subroutine Gamma_new(Int1,Int2,Int1_2,Int2_2,Scr1)
 #include "intent.fh"
 
 use MBPT2_Global, only: CMO, EOcc, EVir, mAdOcc, mAdVir, nBas
-use stdalloc, only: mma_allocate, mma_deallocate
+use stdalloc, only: mma_allocate, mma_deallocate, mma_maxDBLE
 use Constants, only: Zero, One, Two
 use Definitions, only: wp, iwp
 #ifdef _DEBUGPRINT_
@@ -91,7 +91,7 @@ end do
 #ifdef _DEBUGPRINT_
 ! Print the elements of the Full CMO-matrices as well as CMO_o and CMO_v.
 do iSym=1,nSym
-  call RecPrt('Full CMO',' ',CMO(iOffCMO(iSym)+1),nBas(iSym),nTOrb(iSym))
+  call RecPrt('Full CMO',' ',CMO(iOffCMO(iSym)+1:),nBas(iSym),nTOrb(iSym))
 end do
 do iSym=1,nSym
   call RecPrt('Occupied CMO',' ',CMO_o(iOffCMO_o(iSym)+1),nBas(iSym),nOcc(iSym))

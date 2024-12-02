@@ -58,7 +58,7 @@ use RI_glob, only: BklK, BMP2, CijK, CilK, CMOi, DMLT, DoCholExch, iAdrCVec, iBD
                    Yij, Ymnij
 use Cholesky, only: nSym, timings, ThrCom
 use Data_Structures, only: Deallocate_DT
-use stdalloc, only: mma_allocate, mma_deallocate
+use stdalloc, only: mma_allocate, mma_deallocate, mma_maxDBLE
 use Constants, only: Zero, Two
 use Definitions, only: wp, iwp, u6
 
@@ -832,16 +832,16 @@ if (DoCholExch) then
     call mma_deallocate(Ymnij(i)%A)
   end do
 end if
-if (allocated(CijK)) call mma_deallocate(CijK)
-if (allocated(CilK)) call mma_deallocate(CilK)
-if (allocated(BklK)) call mma_deallocate(BklK)
+call mma_deallocate(CijK,safe='*')
+call mma_deallocate(CilK,safe='*')
+call mma_deallocate(BklK,safe='*')
 do i=1,nKDens
   call Deallocate_DT(CMOi(i))
 end do
 call mma_deallocate(MaxDens)
 
-if (allocated(BMP2)) call mma_deallocate(BMP2)
-if (allocated(Thpkl)) call mma_deallocate(Thpkl)
+call mma_deallocate(BMP2,safe='*')
+call mma_deallocate(Thpkl,safe='*')
 
 call mma_deallocate(Sew_Scr)
 call Free_Tsk2(id)

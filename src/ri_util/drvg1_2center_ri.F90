@@ -47,7 +47,7 @@ use RICD_Info, only: Do_RI
 use Symmetry_Info, only: nIrrep
 use Para_Info, only: King, nProcs
 use RI_glob, only: A, AMP2, CijK, DoCholExch, iMP2prpt, MxChVInShl, nIJR, nKvec
-use stdalloc, only: mma_allocate, mma_deallocate
+use stdalloc, only: mma_allocate, mma_deallocate, mma_maxDBLE
 use Constants, only: Zero, One, Three, Eight, Half
 use Definitions, only: wp, iwp, u6
 
@@ -484,8 +484,8 @@ call mma_deallocate(Sew_Scr)
 call Free_Tsk(id)
 if (Method_chk == 'CASPT2') call mma_deallocate(A_PT2)
 call mma_deallocate(Shij)
-if (allocated(TMax1)) call mma_deallocate(TMax1)
-if (allocated(TMax2)) call mma_deallocate(TMax2)
+call mma_deallocate(TMax1,safe='*')
+call mma_deallocate(TMax2,safe='*')
 !                                                                      *
 !***********************************************************************
 !                                                                      *
@@ -508,7 +508,7 @@ if (DoCholExch) then
   call mma_deallocate(CijK)
   call mma_deallocate(A)
 end if
-if (allocated(AMP2)) call mma_deallocate(AMP2)
+call mma_deallocate(AMP2,safe='*')
 
 call Free_iSD()
 !                                                                      *

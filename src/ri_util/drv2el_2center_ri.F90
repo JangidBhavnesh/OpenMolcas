@@ -43,7 +43,7 @@ use Gateway_Info, only: CutInt
 use Symmetry_Info, only: nIrrep
 use Int_Options, only: iTOffs
 use Integral_interfaces, only: Int_PostProcess, int_wrout
-use stdalloc, only: mma_allocate, mma_deallocate
+use stdalloc, only: mma_allocate, mma_deallocate, mma_maxDBLE
 use Constants, only: Zero
 use Definitions, only: wp, iwp
 
@@ -228,7 +228,7 @@ call xRlsMem_Ints()
 call mma_deallocate(TInt)
 call mma_deallocate(TMax)
 call mma_deallocate(SO2Ind)
-Int_PostProcess => null()
+nullify(Int_PostProcess)
 !                                                                      *
 !***********************************************************************
 !                                                                      *

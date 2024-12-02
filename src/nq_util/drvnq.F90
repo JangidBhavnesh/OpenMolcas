@@ -25,7 +25,7 @@ subroutine DrvNQ(Kernel,FckInt,nFckDim,Funct,Density,nFckInt,nD,Do_Grad,Grad,nGr
 use Symmetry_Info, only: nIrrep
 use nq_Grid, only: Angular, Coor, F_xc, F_xca, F_xcb, Fact, GradRho, Grid, IndGrd, iTab, kAO, l_CASDFT, Lapl, List_G, Mem, &
                    nGridMax, nR_Eff, nRho, Pax, Rho, Sigma, Tau, Temp, vLapl, vRho, vSigma, vTau, Weights
-use nq_pdft, only: lft, lGGA
+use nq_pdft, only: lft, lGGA, lmGGA1, lmGGA2
 use nq_MO, only: nMOs, CMO, D1MO, P2MO, P2_ontop
 use nq_Structure, only: Close_NQ_Data
 use nq_Info, only: Functional_type, GGA_type, LDA_type, mBas, meta_GGA_type1, meta_GGA_type2, mIrrep, nAsh, nAtoms, nFro, &
@@ -191,6 +191,7 @@ select case (Functional_type)
 
     nP2_ontop = 4
     lGGA = .true.
+!    write(6,*) 'nD=',nD
     !                                                                  *
     !*******************************************************************
     !                                                                  *
@@ -223,6 +224,9 @@ select case (Functional_type)
     ! need rho(beta), gamma(beta,beta) and tau(beta).
 
     nP2_ontop = 4
+    lGGA = .true.
+    lmGGA1 = .true.
+!    write(6,*) 'nD=',nD
     !                                                                  *
     !*******************************************************************
     !                                                                  *
@@ -255,6 +259,10 @@ select case (Functional_type)
     ! tau(beta) and laplacian(beta).
 
     nP2_ontop = 4
+    lGGA = .true.
+    lmGGA1 = .true.
+    lmGGA2 = .true.
+!    write(6,*) 'nD GGA_type2 =',nD
     !                                                                  *
     !*******************************************************************
     !                                                                  *
@@ -409,9 +417,9 @@ call mma_deallocate(List_Bas)
 call mma_deallocate(List_Exp)
 call mma_deallocate(List_S)
 ! Do_TwoEl
-if (allocated(D1MO)) call mma_deallocate(D1MO)
-if (allocated(P2MO)) call mma_deallocate(P2MO)
-if (allocated(CMO)) call mma_deallocate(CMO)
+call mma_deallocate(D1MO,safe='*')
+call mma_deallocate(P2MO,safe='*')
+call mma_deallocate(CMO,safe='*')
 if (l_casdft) then
   call mma_deallocate(F_xcb)
   call mma_deallocate(F_xca)
@@ -429,7 +437,7 @@ if (allocated(Tau)) then
   call mma_deallocate(vTau)
   call mma_deallocate(Tau)
 end if
-if (allocated(GradRho)) call mma_deallocate(GradRho)
+call mma_deallocate(GradRho,safe='*')
 if (allocated(Sigma)) then
   call mma_deallocate(dfunc_dSigma)
   call mma_deallocate(vSigma)
@@ -446,7 +454,7 @@ call mma_deallocate(Grid)
 write(u6,*) 'l_casdft value at drvnq:',l_casdft
 if (l_casdft) write(u6,*) 'MCPDFT with functional:',KSDFA
 #endif
-if (allocated(P2_ontop)) call mma_deallocate(P2_ontop)
+call mma_deallocate(P2_ontop,safe='*')
 
 call mma_deallocate(nR_Eff)
 call mma_deallocate(Coor)
