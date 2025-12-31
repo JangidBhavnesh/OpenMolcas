@@ -10,21 +10,20 @@
 ************************************************************************
       SUBROUTINE PT2INI()
       USE INPUTDATA, ONLY: INPUT, READIN_CASPT2
+      use PT2WFN, ONLY: PT2WFN_INIT,PT2WFN_DATA
       USE REFWFN, ONLY: REFWFN_INIT, REFWFN_INFO, REFWFN_DATA,
      &                  REFWFN_CLOSE
-      USE PT2WFN
-      use caspt2_global, only: do_grad
+      use caspt2_global, only: do_grad,iStpGrd
       use caspt2_global, only: FIMO, FAMO, FIFA, HONE, DREF, PREF, DMIX,
      &                       DWGT, CMOPT2, TAT, NTAT, TORB, NTORB,
      &                       NDREF, NPREF, NCMO
       use stdalloc, only: mma_allocate
-      use EQSOLV
-      use ChoCASPT2
+      use ChoCASPT2, only: InfVec_N2_PT2, MaxVec_PT2, NASPlit,NISplit,
+     &                     NumCho_PT2
       use spool, only: SpoolInp, Close_LuSpool
       IMPLICIT NONE
 #include "caspt2.fh"
 #include "pt2_guga.fh"
-#include "intgrl.fh"
 #include "compiler_features.h"
 
       INTEGER LuSpool
@@ -41,6 +40,7 @@ C     Cholesky
       nbast=sum(nbas(1:nsym))
       nbsqt=sum(nbas(1:nsym)**2)
       Call Get_cArray('Unique Basis Names',Name,(LENIN8)*nbast)
+      jstate = 1
       Call DecideOnCholesky(IfChol)
 * PAM Feb 2008: The following statement was moved here from
 * prpctl, in case prpctl call is bypassed by keyword ''NOPROP''.
@@ -141,31 +141,30 @@ C Initialize sizes, offsets etc used in equation solver.
 
 * Allocate global orbital arrays:
       CALL mma_allocate(CMOPT2,NCMO,Label='CMOPT2')
+      CMOPT2(:) = 0.0d0
 * Allocate global orbital transformation arrays:
       CALL mma_allocate(TORB,NTORB,Label='TORB')
       CALL mma_allocate(TAT,NTAT,Label='TAT')
 
 ! initialize quantities for gradient calculation
-      If (do_grad) Then
-        CALL GrdIni()
-      End If
+      iStpGrd = 1 !! Just in case
+      If (do_grad) Call GrdIni()
 
       END SUBROUTINE PT2INI
 
       SUBROUTINE PT2CLS()
-      USE SUPERINDEX
       USE INPUTDATA, ONLY: CLEANUP_INPUT
-      USE PT2WFN
+      USE SUPERINDEX, ONLY: SUPFREE
+      use PT2WFN, ONLY: PT2WFN_CLOSE
       use gugx, only: SGS, CIS, EXS
       use caspt2_global, only: FIMO, FAMO, FIFA, HONE, DREF, PREF, DMIX,
-     &                       DWGT, CMOPT2, TAT, TORB, IDSCT
+     &                       DWGT, CMOPT2, TAT, TORB, IDSCT, Weight
       use stdalloc, only: mma_deallocate
 * NOT TESTED
 #if 0
       use OFembed, only: FMaux
 #endif
-      use EQSOLV
-      use ChoCASPT2
+      use ChoCASPT2, only: NASplit,NISplit,NumCho_PT2
       IMPLICIT NONE
 #include "caspt2.fh"
 
@@ -221,6 +220,9 @@ C     Deallocate MAGEB, etc, superindex tables:
       call pt2wfn_close()
 C     Close all files:
       CALL CLSFLS_CASPT2()
+
+! Weight array is allocated in refwfn_info
+      call mma_deallocate(Weight)
 
 C free input struct
       CALL CleanUp_Input()

@@ -11,6 +11,7 @@
 
 set (sources
      backtrans_k.F90
+     backtrans_kt.F90
      covarmatrix.F90
      covarvector.F90
      dispersion_kriging.F90
@@ -22,8 +23,8 @@ set (sources
      gradient_kriging_layer.F90
      hessian_kriging.F90
      hessian_kriging_layer.F90
-     kriging_model.F90
      kriging_mod.F90
+     kriging_model.F90
      kriging_procedures.F90
      matderiv.F90
      matern.F90

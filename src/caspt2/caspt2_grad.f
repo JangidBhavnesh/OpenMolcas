@@ -20,7 +20,7 @@ C
      *                           DPT2_tot,DPT2C_tot,DPT2_AO_tot,
      *                           DPT2C_AO_tot,DPT2Canti_tot,
      *                           FIMO_all,FIFA_all,FIFASA_all,idSDMat,
-     *                           OMGDER
+     *                           OMGDER,iTasks_grad
       use stdalloc, only: mma_allocate,mma_deallocate
       use definitions, only: wp
 C
@@ -86,11 +86,6 @@ C
       !! Allocate lagrangian terms
       ! CLag and SLag should allocate for nRoots and not nState,
       ! but for the time being we only support the case nState=nRoots
-      nOLag = 0
-      nCLag = 0
-C     DO iSym = 1, nSym
-C       nCLag = nCLag + nState*CIS%nCSF(iSym)
-C     END DO
       nCLag = nconf*nState
       nOLag = NBSQT
       nSLag = nState*nState
@@ -191,6 +186,8 @@ C
       call mma_deallocate(WRK)
 C
       if (nFroT /= 0) call mma_allocate(TraFro,nFroT**2,Label='TraFro')
+      call mma_allocate(iTasks_grad,nAshT**2,Label='Tasks_grad')
+      iTasks_grad(:) = 0
 C
       Return
 
@@ -205,13 +202,17 @@ C
      *                           do_nac,do_csf,iRoot1,iRoot2,LUGRAD,
      *                           LUSTD,TraFro,
      *                           CLag,CLagFull,OLag,OLagFull,SLag,WLag,
-     *                           nCLag,nOLag,nSLag,nWLag,
+     *                           nOLag,nWLag,
      *                           DPT2_tot,DPT2C_tot,DPT2_AO_tot,
      *                           DPT2C_AO_tot,DPT2Canti_tot,
-     *                           FIMO_all,FIFA_all,FIFASA_all,OMGDER
+     *                           FIMO_all,FIFA_all,FIFASA_all,OMGDER,
+     *                           iTasks_grad
       use PrintLevel, only: verbose
       use stdalloc, only: mma_allocate,mma_deallocate
       use definitions, only: wp
+#ifdef _MOLCAS_MPP_
+      USE Para_Info, ONLY: Is_Real_Par, King
+#endif
 C
       IMPLICIT REAL*8 (A-H,O-Z)
 C
@@ -220,6 +221,7 @@ C
       Dimension UEFF(nState,nState),U0(nState,nState),H0(nState,nState)
       Character(Len=16) mstate1
       LOGICAL DEB,Found
+      logical, external :: RF_On
 C
       real(kind=wp),allocatable :: HEFF1(:,:),WRK1(:,:),WRK2(:,:),
      *                             CI1(:,:)
@@ -300,7 +302,9 @@ C
       End If
 
       !! Now, compute the state Lagrangian and do some projections
-      Call CLagFinal(CLagFull,SLag)
+      !! If PCM, we have to obtain internal state rotation parameters
+      !! self-consistently, so we should not call this subroutine
+      If (.not.RF_On()) Call CLagFinal(CLagFull,SLag)
 
       !! Add MS-CASPT2 contributions
       If (IFMSCOUP) Then
@@ -375,11 +379,19 @@ C
       DEB = .false.
       !! configuration Lagrangian (read in RHS_PT2)
       If (DEB) call RecPrt('CLagFull','',CLagFull,nConf,nState)
-      Do i = 1, nCLag
-        Write (LuPT2,*) CLagFull(i,1)
-      End Do
+      Do j = 1, nState
+        Do i = 1, nConf
+          Write (LuPT2,*) CLagFull(i,j)
+        End Do
+      End do
 
       !! orbital Lagrangian (read in RHS_PT2)
+#ifdef _MOLCAS_MPP_
+      if (is_real_par()) then
+        If (.not.King()) OLagFull(:) = 0.0d+00
+        CALL GADSUM (OLagFull,nOLag)
+      end if
+#endif
       If (DEB) call RecPrt('OLagFull','',OLagFull,nBasT,nBasT)
       Do i = 1, nOLag
         Write (LuPT2,*) OLagFull(i)
@@ -387,23 +399,43 @@ C
 
       !! state Lagrangian (read in RHS_PT2)
       If (DEB) call RecPrt('SLag', '', SLag, nState, nState)
-      Do i = 1, nSLag
-        Write (LuPT2,*) SLag(i,1)
+      Do j = 1, nState
+        Do i = 1, nState
+          Write (LuPT2,*) SLag(i,j)
+        End Do
       End Do
 
       !! renormalization contributions (read in OUT_PT2)
+#ifdef _MOLCAS_MPP_
+      if (is_real_par()) then
+        If (.not.King()) WLag(:) = 0.0d+00
+        CALL GADSUM (WLag,nWLag)
+      end if
+#endif
       If (DEB) call TriPrt('WLag', '', WLag, nBast)
       Do i = 1, nWLag ! = NBTRI
         Write (LuPT2,*) WLag(i)
       End Do
 
       !! D^PT2 in MO (read in OUT_PT2)
+#ifdef _MOLCAS_MPP_
+      if (is_real_par()) then
+        If (.not.King()) DPT2_tot(:) = 0.0d+00
+        CALL GADSUM (DPT2_tot,NBSQT)
+      end if
+#endif
       If (DEB) call RecPrt('DPT2', '', DPT2_tot, nBast, nBast)
       Do i = 1, NBSQT
         Write (LuPT2,*) DPT2_tot(i)
       End Do
 
       !! D^PT2(C) in MO (read in OUT_PT2)
+#ifdef _MOLCAS_MPP_
+      if (is_real_par()) then
+        If (.not.King()) DPT2C_tot(:) = 0.0D+00
+        CALL GADSUM (DPT2C_tot,NBSQT)
+      end if
+#endif
       If (DEB) call RecPrt('DPT2C', '', DPT2C_tot, nBast, nBast)
       Do i = 1, NBSQT
         Write (LuPT2,*) DPT2C_tot(i)
@@ -417,6 +449,11 @@ C
       End If
 
       !! D^PT2 in AO (not used?)
+      if (RFpert.and.IFMSCOUP) then
+        !! Recompute DPT2AO and DPT2AO for PCM
+        Call Recompute_DPT2AO(DPT2_tot,DPT2C_tot,
+     *                        DPT2_AO_tot,DPT2C_AO_tot)
+      end if
       If (DEB) call TriPrt('DPT2_AO_tot', '', DPT2_AO_tot, nBast)
       Do i = 1, NBSQT
         Write (LuPT2,*) DPT2_AO_tot(i)
@@ -427,6 +464,22 @@ C
       Do i = 1, NBSQT
         Write (LuPT2,*) DPT2C_AO_tot(i)
       End Do
+
+      if (RFpert) then
+        !! For CASPT2/PCM gradient
+        !! The implicit derivative contributions have not been
+        !! considered in the CASPT2 module
+        if (ifmscoup) then
+          ! I do not remember why this should be halved
+          call daxpy_(NBTRI,0.5D+00,DPT2C_AO_tot,1,DPT2_AO_tot,1)
+        else
+          call daxpy_(NBTRI,1.0D+00,DPT2C_AO_tot,1,DPT2_AO_tot,1)
+        end if
+        Call Put_dArray('D1aoVar',DPT2_AO_tot,NBTRI)
+      else
+        !! not sure this is OK
+        Call Put_dArray('D1aoVar',DPT2_AO_tot,0)
+      end if
 
       ! close gradient files
       Close (LuPT2)
@@ -493,6 +546,7 @@ C
       Call DaClos(LUGRAD)
 C
       if (nFroT /= 0) call mma_deallocate(TraFro)
+      call mma_deallocate(iTasks_grad)
 C
       Return
 C
@@ -547,22 +601,6 @@ C
         Write (6,'(3X,"A linear equation will be solved to obtain ",
      *                "the off-diagonal active density")')
         Write (6,*)
-      End If
-C
-      If (nState > 1) Then
-        If (.not.(IFSADREF .or. IFXMS .or. IFRMS)) Then
-          write(6,*)
-     *    "Please add SADREF keyword in CASPT2 section",
-     *    "This keyword is recommended with state-averaged reference"
-        End If
-      End If
-      If ((.not.IFDORTHO) .and. (ipea_shift /= 0.0D+00)) Then
-        write(6,*)
-     *    "It seems that DORT keyword is not used, ",
-     *    "even though this calculation uses the IPEA shift"
-        write(6,*)
-     *    "Sometimes, analytic gradients do not agree ",
-     *    "with numerical gradients"
       End If
 C
       End Subroutine GradStart
@@ -839,3 +877,64 @@ C
       Return
 C
       End Subroutine CnstFIFAFIMO
+C
+C-----------------------------------------------------------------------
+C
+      Subroutine Recompute_DPT2AO(DPT2,DPT2C,DPT2AO,DPT2CAO)
+C
+      use definitions, only: wp
+      use stdalloc, only: mma_allocate,mma_deallocate
+      use caspt2_global, only: LUONEM
+C
+      Implicit Real*8 (A-H,O-Z)
+C
+#include "caspt2.fh"
+C
+      real(kind=wp), intent(in) :: DPT2(NBSQT),DPT2C(NBSQT)
+      real(kind=wp), intent(inout) :: DPT2AO(NBSQT),DPT2CAO(NBSQT)
+      real(kind=wp), allocatable :: WRK1(:),WRK2(:),WRK3(:),WRK4(:)
+C
+      call mma_allocate(WRK1,NBSQT,Label='WRK1')
+      call mma_allocate(WRK2,NBSQT,Label='WRK2')
+      call mma_allocate(WRK3,NBSQT,Label='WRK3')
+      call mma_allocate(WRK4,NBSQT,Label='WRK4')
+      IDISK=IAD1M(1)
+      CALL DDAFILE(LUONEM,2,WRK1,NBSQT,IDISK)
+
+      call dcopy_(NBSQT,[0.0d+00],0,DPT2AO,1)
+      call dcopy_(NBSQT,[0.0d+00],0,DPT2CAO,1)
+C
+      iBasTr = 1
+      iBasSq = 1
+      Do iSym = 1, nSym
+        call OLagTrf(1,iSym,WRK1,DPT2 ,WRK3,WRK2)
+        call OLagTrf(1,iSym,WRK1,DPT2C,WRK4,WRK2)
+        nBasI = nBas(iSym)
+        liBasTr = iBasTr
+        liBasSq = iBasSq
+        ljBasSq = iBasSq
+        Do iBasI = 1, nBasI
+          Do jBasI = 1, iBasI
+            liBasSq = iBasSq + iBasI-1 + nBasI*(jBasI-1)
+            ljBasSq = iBasSq + jBasI-1 + nBasI*(iBasI-1)
+            If (iBasI.eq.jBasI) Then
+              DPT2AO (liBasTr) = WRK3(liBasSq)
+              DPT2CAO(liBasTr) = WRK4(liBasSq)
+            Else
+              val = WRK3(liBasSq)+WRK3(ljBasSq)
+              DPT2AO (liBasTr) = val
+              val = WRK4(liBasSq)+WRK4(ljBasSq)
+              DPT2CAO(liBasTr) = val
+            End If
+            liBasTr = liBasTr + 1
+          End Do
+        End Do
+        iBasTr = iBasTr + nBasI*(nBasI+1)/2
+      End Do
+C
+      call mma_deallocate(WRK1)
+      call mma_deallocate(WRK2)
+      call mma_deallocate(WRK3)
+      call mma_deallocate(WRK4)
+
+      End Subroutine Recompute_DPT2AO

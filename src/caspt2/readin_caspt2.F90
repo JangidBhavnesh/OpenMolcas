@@ -151,8 +151,6 @@ module InputData
     Real(kind=wp)     :: PrWF = 0.05_wp
     ! PRSD      print the determinant expansion of CSFs
     Logical(kind=iwp) :: PrSD = .false.
-    ! NOOR      do not print any orbitals
-    Logical(kind=iwp) :: NoOrb = .false.
 
     ! UNDOCUMENTED KEYWORDS
     ! CHOL
@@ -195,7 +193,7 @@ module InputData
     Logical :: NAC = .False.
     Integer :: iNACRoot1=0, iNACRoot2=0
     ! CSF       compute CSF contributions in derivative coupling
-    Logical :: CSF = .False.
+    Logical :: CSF = .True.
     ! IAINVAR   specify the CASPT2 energy is invariant wrt inactive
     !           and secondary orbital rotations. Development purpose
     Logical :: IAINVAR  = .True.
@@ -239,7 +237,7 @@ contains
     ! for now, non-histogramming remains the default, hopefully that will change soon.
     TransformToNormalOrder = .false.
 
-    rewind (LuIn)
+    rewind(LuIn)
     call RdNLst(LuIn,'CASPT2')
 
     ! beginning of reading loop
@@ -701,8 +699,8 @@ contains
         end do
         call mma_deallocate (dLine)
 
-      Case('CSF ')
-        Input%CSF = .true.
+      Case('NOCS')
+        Input%CSF = .false.
 
       Case('IAIN')
         Input%IAINVAR = .false.

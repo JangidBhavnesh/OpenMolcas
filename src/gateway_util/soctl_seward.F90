@@ -11,7 +11,7 @@
 
 subroutine SOCtl_Seward(Mamn,nMamn)
 
-use Basis_Info, only: dbsc, iCnttp_Dummy, nBas, nBas_Aux, nBas_Frag, nCnttp, MolWgh, Shells
+use Basis_Info, only: dbsc, icent, iCnttp_Dummy, lant, lmag, lnang, MolWgh, nBas, nBas_Aux, nBas_Frag, nCnttp, nrBas, nrSym, Shells
 use Center_Info, only: dc
 use Symmetry_Info, only: ChOper, iChBas, iChTbl, iOper, iSkip, lBsFnc, lIrrep, nIrrep
 use SOAO_Info, only: iAOtSO, iSOInf, iOffSO, nSOInf, SOAO_Info_Init
@@ -27,7 +27,6 @@ implicit none
 #include "Molcas.fh"
 integer(kind=iwp), intent(in) :: nMamn
 character(len=LenIn8), intent(out) :: Mamn(nMamn)
-#include "rinfo.fh"
 #include "print.fh"
 integer(kind=iwp) :: i, iAng, iAO, iAtoms, iBas, iBas_Aux, iBas_Frag, iChBs, iChxyz, iCnt, iCntrc, iCnttp, iCo, iComp, iCounter, &
                      iIrrep, imc, iPrint, iR, iRout, iSh, iShell, iSO, iSO_, iSO_Aux, iSO_Frag, iSO_Tot, isymunit, itest1, itest2, &
@@ -112,7 +111,7 @@ List_AE(:) = 0
 
 isymunit = isfreeunit(58)
 call molcas_open(isymunit,'SYMINFO')
-rewind isymunit
+rewind(isymunit)
 write(isymunit,'(A)') 'Symmetry information from seward'
 write(isymunit,'(A)') '#of funct, unique centre, L, M , # of sym.ad.functions , Phases'
 !                                                                      *
@@ -174,7 +173,7 @@ if (nIrrep /= 1) then
   iCounter = 0
   jCounter = 0
   call mma_Allocate(SM,iBas,iBas,label='SM')
-  call FZero(SM,iBas**2)
+  SM(:,:) = Zero
   call mma_Allocate(IndC,2*S%mCentr)
   iAtoms = 0
 
@@ -229,7 +228,7 @@ if (nIrrep /= 1) then
 
           ! ECP case
 
-          call ECP_Shells(dbsc(iCnttp)%AtmNr,list)
+          call ECP_Shells(dbsc(iCnttp)%AtmNr,dbsc(iCnttp)%cPP,list)
 
           ! No core to freeze!
 
@@ -558,7 +557,7 @@ else
       lMax = dbsc(iCnttp)%nVal-1
       call OrbType(dbsc(iCnttp)%AtmNr,List_AE,31)
       if (kECP) then
-        call ECP_Shells(dbsc(iCnttp)%AtmNr,list)
+        call ECP_Shells(dbsc(iCnttp)%AtmNr,dbsc(iCnttp)%cPP,list)
         nCore_Sh(0:lmax) = 0
       else
         List(:) = List_AE

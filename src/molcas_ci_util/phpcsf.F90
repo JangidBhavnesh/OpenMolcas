@@ -44,6 +44,7 @@ subroutine PHPCSF(PHP,IPCSF,IPCNF,MXPDIM,DTOC,IPRODT,ICONF,IREFSM,ONEBOD,ECORE,N
 
 use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 use Index_Functions, only: nTri_Elem
+use spinfo, only: NCNFTP, NCSFTP, NTYP
 use Constants, only: One
 use Definitions, only: wp, iwp, u6
 
@@ -57,12 +58,11 @@ real(kind=wp), intent(in) :: DTOC(*), ONEBOD(NACTOB,NACTOB), ECORE, DIAG(*), TUV
 real(kind=wp), intent(_OUT_) :: SCR(*)
 integer(kind=iwp), intent(out) :: NPCSF, NPCNF
 integer(kind=iwp), intent(inout) :: NTEST
-integer(kind=iwp) :: ICSFMN, IFINIT, IICNF, IICSF, IILACT, IILB, IIRACT, IIRB, IIRMAX, ILRI, ILRO, ILTYP, IMIN, IRTYP, KLCONF, &
+integer(kind=iwp) :: i, ICSFMN, IFINIT, IICNF, IICSF, IILACT, IILB, IIRACT, IIRB, IIRMAX, ILRI, ILRO, ILTYP, IMIN, IRTYP, KLCONF, &
                      KLFREE, KLPHPS, KRCONF, MXCSFC, NCSFL, NCSFMN, NCSFR, NIRREP, NJCNF
 real(kind=wp) :: XMAX, XMIN
 real(kind=wp), parameter :: Acc = 1.0e-13_wp ! Assumed machine accuray (give and take)
 real(kind=wp), external :: FNDMNX
-#include "spinfo.fh"
 
 call PHPCSF_INTERNAL(SCR)
 
@@ -120,7 +120,7 @@ subroutine PHPCSF_INTERNAL(SCR)
       ! add new configuration
       NPCNF = NPCNF+1
       IPCNF(NPCNF) = IMIN
-      call ISTVC2(IPCSF(NPCSF+1),ICSFMN-1,1,NCSFMN)
+      IPCSF(NPCSF+1:NPCSF+NCSFMN) = [(i,i=ICSFMN,ICSFMN+NCSFMN-1)]
       NPCSF = NPCSF+NCSFMN
       SCR(IMIN) = XMAX+One
     else
@@ -134,7 +134,7 @@ subroutine PHPCSF_INTERNAL(SCR)
       !  DIAVAL = SCR(IPCNF(IICNF))
       !  if (abs(DIAVAL-XMIN) > 1.0e-10_wp) exit
       !  NPCNF = NPCNF-1
-      !  call GETCNF_LUCIA(SCR(NCONF+1),ITYP,IPCNF(IICNF),ICONF,IREFSM,NEL)
+      !  call GETCNF(SCR(NCONF+1),ITYP,IPCNF(IICNF),ICONF,IREFSM,NEL)
       !  NPCSF = NPCSF-NCSFTP(ITYP)
       !end do
     end if
@@ -183,13 +183,13 @@ subroutine PHPCSF_INTERNAL(SCR)
   IILB = 1
   do ICNL=1,NPCNF
     call c_f_pointer(c_loc(SCR(KLCONF)),iSCRl,[1])
-    call GETCNF_LUCIA(iSCRl,ILTYP,IPCNF(ICNL),ICONF,IREFSM,NEL)
+    call GETCNF(iSCRl,ILTYP,IPCNF(ICNL),ICONF,IREFSM,NEL)
     nullify(iSCRl)
     NCSFL = NCSFTP(ILTYP)
     IIRB = 1
     do ICNR=1,ICNL
       call c_f_pointer(c_loc(SCR(KRCONF)),iSCRr,[1])
-      call GETCNF_LUCIA(iSCRr,IRTYP,IPCNF(ICNR),ICONF,IREFSM,NEL)
+      call GETCNF(iSCRr,IRTYP,IPCNF(ICNR),ICONF,IREFSM,NEL)
       nullify(iSCRr)
       NCSFR = NCSFTP(IRTYP)
       call c_f_pointer(c_loc(SCR(KLCONF)),iSCRl,[1])

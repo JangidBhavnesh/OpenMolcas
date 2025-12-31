@@ -126,12 +126,12 @@ outer: do iMlt=1,MxMltp
       call Quit(_RC_IO_ERROR_READ_)
     end if
   end do
-  CordMul(iMlt,:) = Mult(iMlt,1)%A(nSize+1:3)
+  CordMul(iMlt,:) = Mult(iMlt,1)%A(nSize+1:nSize+3)
   nMlt = MxMltp
 end do outer
 
 !----------------------------------------------------------------------*
-! Collect centers from preceeding MpProp calculation. Compute two      *
+! Collect centers from preceding MpProp calculation. Compute two       *
 ! index vectors. First one gives index of atom on which the ith basis  *
 ! function is centered. The other (iCenTri) gives to which center the  *
 ! ith unique basis function product belong.                            *

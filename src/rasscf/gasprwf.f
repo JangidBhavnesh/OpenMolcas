@@ -42,15 +42,12 @@
 ************************************************************************
 
       use rasscf_global, only: PrwThr, nSm
+      use output_ras, only: LF
+      use spinfo, only: NTYP,MINOP,NCNFTP,NCSFTP
 
       Implicit None
 
-
 #include "rasdim.fh"
-#include "strnum.fh"
-#include "ciinfo.fh"
-#include "spinfo.fh"
-#include "output_ras.fh"
 C
       Integer nOrb, nEl
       Integer ICONF(*),ISPIN(*)
@@ -87,13 +84,13 @@ C
       DO 1000 ITYP = 1, NTYP
         IOPEN = ITYP + MINOP - 1
         ICL = (NEL - IOPEN) / 2
-C      BASE ADRESS FOR CONFIGURATION OF THIS TYPE
+C      BASE ADDRESS FOR CONFIGURATION OF THIS TYPE
         IF( ITYP .EQ. 1 ) THEN
           ICNBS0 = 1
         ELSE
           ICNBS0 = ICNBS0 + NCNFTP(ITYP-1,IREFSM)*(NEL+IOPEN-1)/2
         END IF
-C      BASE ADRESS FOR PROTOTYPE SPIN COUPLINGS
+C      BASE ADDRESS FOR PROTOTYPE SPIN COUPLINGS
         IF( ITYP .EQ. 1 ) THEN
           IPBAS = 1
         ELSE

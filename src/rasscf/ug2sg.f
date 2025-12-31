@@ -27,22 +27,25 @@ C              INVOLVED WHEN GOING FROM THE SYMMETRIC TO THE
 C              UNITARY GROUP AND THE SPLIT ORDERING NUMBER.
 C
       use gugx, only: SGS,CIS, EXS
-      IMPLICIT REAL*8 (A-H,O-Z)
+      use output_ras, only: LF
+      use spinfo, only: NTYP,MINOP,NCNFTP,NCSFTP
+      IMPLICIT None
+      INTEGER NROOTS,NCONF,NORB,NEL,IREFSM,IPRINT,MXROOTS
+      INTEGER ICONF(*),ISPIN(*)
+      INTEGER IORD(*)
+      INTEGER ICI(MXROOTS,*),JCJ(MXROOTS,*)
+      REAL*8 CCI(MXROOTS,*)
 C
 #include "rasdim.fh"
-#include "output_ras.fh"
-#include "strnum.fh"
-#include "ciinfo.fh"
-#include "spinfo.fh"
 C
-      DIMENSION ICONF(*),ISPIN(*)
-      DIMENSION IORD(*)
-      DIMENSION ICI(MXROOTS,*),JCJ(MXROOTS,*),CCI(MXROOTS,*)
-C
-      DIMENSION IWALK(mxAct)
-      DIMENSION KCNF(mxAct)
+      INTEGER IWALK(mxAct)
+      INTEGER KCNF(mxAct)
       Integer, External:: IPHASE
       Integer nVert, nLev, nMidV, MxUp, MxDwn
+      Integer K,L,KREF,KROOT,ICSFJP,ICNBS0,IPBAS,ITYP,IOPEN,ICL,IC,
+     &        ICNBS,IICSF,ICSBAS,IIBOP,IIBCL,JOCC,KOCC,ISG,IP,LPRINT,
+     &        I,ISGNUM,KORB
+      REAL*8 PHASE
 
       nLev  = SGS%nLev
       nVert = SGS%nVert
@@ -76,13 +79,13 @@ C
       DO 1000 ITYP = 1, NTYP
         IOPEN = ITYP + MINOP - 1
         ICL = (NEL - IOPEN) / 2
-C      BASE ADRESS FOR CONFIGURATION OF THIS TYPE
+C      BASE ADDRESS FOR CONFIGURATION OF THIS TYPE
         IF( ITYP .EQ. 1 ) THEN
           ICNBS0 = 1
         ELSE
           ICNBS0 = ICNBS0 + NCNFTP(ITYP-1,IREFSM)*(NEL+IOPEN-1)/2
         END IF
-C      BASE ADRESS FOR PROTOTYPE SPIN COUPLINGS
+C      BASE ADDRESS FOR PROTOTYPE SPIN COUPLINGS
         IF( ITYP .EQ. 1 ) THEN
           IPBAS = 1
         ELSE

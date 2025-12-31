@@ -748,9 +748,13 @@ C
      *                           CLag,CLagFull,OLag,DPT2_tot,
      *                           FIFA_all,FIFASA_all
       use caspt2_global, only: FIFA, TORB, NDREF
+      use caspt2_global, only: CMOPT2, if_equalW, weight
       use gugx, only: SGS
       use stdalloc, only: mma_allocate, mma_deallocate
       use definitions, only: wp
+#ifdef _MOLCAS_MPP_
+      USE Para_Info, ONLY: Is_Real_Par
+#endif
       Implicit Real*8 (A-H,O-Z)
 C
 #include "caspt2.fh"
@@ -761,7 +765,7 @@ C
       real(kind=wp),allocatable :: CI1(:),CI2(:),SGM1(:),SGM2(:),TG1(:),
      *                             TG2(:),DG1(:),DG2(:),DG3(:),G1(:,:),
      *                             RDMEIG(:,:),DPT2(:),Trf(:),
-     *                             RDMSA(:,:),WRK1(:),WRK2(:)
+     *                             RDMSA(:,:),WRK1(:),WRK2(:),DPT2_AO(:)
       Integer :: nLev
       nLev = SGS%nLev
 C
@@ -945,12 +949,11 @@ C
         call mma_allocate(WRK2,NBSQT,Label='WRK2')
 C
         !! Construct always state-averaged density; XMS basis is always
-        !! generated with the state-averaged density.
+        !! generated with the equally-averaged density.
         Call DCopy_(nDRef,[0.0D+00],0,WRK1,1)
         call mma_allocate(CI1,nConf,Label='CI1')
         Wgt  = 1.0D+00/nState
         Do iState = 1, nState
-C       Call DaXpY_(nDRef,Wgt,DMIX(:,iState),1,WRK1,1)
           Call LoadCI(CI1,iState)
           call POLY1(CI1,nConf)
           call GETDREF(WRK2,nDRef)
@@ -991,6 +994,36 @@ C
 C
         !! Finalize OLag (anti-symetrize) and construct WLag
         Call OLagFinal(OLag,Trf)
+C
+        If (.not.if_equalW) then
+          call mma_allocate(DPT2_AO,NBSQT,Label='DPT2_AO')
+C
+          !! AddDEPSA considers the frozen orbital, whereas DPT2_Trf
+          !! does not. In any case, construct DPT2 again.
+          DPT2(:) = 0.0d+00
+          CALL DPT2_Trf(DPT2,DPT2_AO,CMOPT2,G1,WRK1)
+          !! Construct the SCF density
+          WRK1(1:nDRef) = 0.0d+00
+          call mma_allocate(CI1,nConf,Label='CI1')
+          Do iState = 1, nState
+            Call LoadCI_XMS('N',1,CI1,iState,U0)
+            call POLY1(CI1,nConf)
+            call GETDREF(WRK2,nDRef)
+            wgt = Weight(iState)
+            Call DaXpY_(nDRef,Wgt,WRK2,1,WRK1,1)
+          End Do
+          call mma_deallocate(CI1)
+          !! WRK2 is the SCF density (for nstate=nroots)
+          Call SQUARE(WRK1,WRK2,1,nAshT,nAshT)
+          Call DaXpY_(nAshT**2,-1.0D+00,WRK2,1,RDMSA,1)
+          !! Construct the SS minus SA density matrix in WRK1
+          Call OLagFroD(WRK1,WRK2,RDMSA,Trf)
+          !! Subtract the inactive part
+          Call DaXpY_(nBasT**2,-1.0D+00,WRK2,1,WRK1,1)
+          !! Save
+          Call CnstAB_SSDM(DPT2_AO,WRK1)
+          call mma_deallocate(DPT2_AO)
+        End If
 C
         call mma_deallocate(RDMSA)
         call mma_deallocate(WRK1)
@@ -1062,7 +1095,13 @@ C
         Call CLagEigT(CLag,G1,SLag,EINACT)
 C
         !! 2) Implicit CI derivative
-        Call CLagEig(.False.,CLag,RDMEIG,nLev)
+        Call CLagEig(.False.,.True.,CLag,RDMEIG,nLev)
+C
+#ifdef _MOLCAS_MPP_
+        if (is_real_par()) then
+          call GADSUM(CLag,nConf*nState)
+        end if
+#endif
 C
         call mma_deallocate(RDMEIG)
         call mma_deallocate(G1)
@@ -1116,6 +1155,9 @@ C
 C
       use stdalloc, only: mma_allocate, mma_deallocate
       use definitions, only: wp
+#ifdef _MOLCAS_MPP_
+      USE Para_Info, ONLY: nProcs, Is_Real_Par
+#endif
 C
       IMPLICIT REAL*8 (A-H,O-Z)
 #include "caspt2.fh"
@@ -1149,6 +1191,11 @@ C
           Call Poly1_CLagT(CI1,CI2,
      *                     CLag(1,iStat),CLag(1,jStat),RDMEIG,Scal)
           !! Inactive terms
+#ifdef _MOLCAS_MPP_
+          !! The inactive contributions are computed in all processes,
+          !! whereas GADSUM will be done later, so divide
+          if (is_real_par()) Scal=Scal/DBLE(nProcs)
+#endif
           Call DaXpY_(nConf,Scal*EINACT,CI1,1,CLag(1,jStat),1)
           Call DaXpY_(nConf,Scal*EINACT,CI2,1,CLag(1,iStat),1)
         End Do
@@ -1340,6 +1387,9 @@ C
       use caspt2_global, only: FIMO_all
       use stdalloc, only: mma_allocate, mma_deallocate
       use definitions, only: iwp,wp
+#ifdef _MOLCAS_MPP_
+      USE Para_Info, ONLY: Is_Real_Par
+#endif
 C
       Implicit Real*8 (A-H,O-Z)
 C
@@ -1526,6 +1576,10 @@ C     call sqprt(fimo,12)
       End Do
       End If
 C
+#ifdef _MOLCAS_MPP_
+      if (is_real_par()) CALL GADSUM (INT2,nAshT**4)
+#endif
+C
       Do IT = 1, nAshT
         Do iU = 1, nAshT
           Do iX = 1, nAshT
@@ -1669,15 +1723,9 @@ C
 C-----------------------------------------------------------------------
 C
       SUBROUTINE DENS1T_RPT2 (CI1,CI2,SGM1,G1,NLEV)
-#ifdef _MOLCAS_MPP_
-      USE Para_Info, ONLY: Is_Real_Par, King
-#endif
       use caspt2_global, only:iPrGlb
       use gugx, only: SGS, L2ACT, CIS
       use PrintLevel, only: debug
-#ifdef _MOLCAS_MPP_
-      USE Para_Info, ONLY: Is_Real_Par, King
-#endif
       use stdalloc, only: mma_allocate, mma_deallocate
       use definitions, only: iwp
       IMPLICIT NONE

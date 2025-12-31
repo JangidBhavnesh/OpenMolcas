@@ -38,6 +38,7 @@ subroutine get_Umn(PHP,EnIn,DHAM,IPCSF,IPCNF,MXPDIM,DTOC,IPRODT,ICONF,IREFSM,ONE
 ! IREOTS : Type => symmetry reordering array
 
 use Index_Functions, only: nTri_Elem
+use spinfo, only: NCSFTP, NTYP
 use stdalloc, only: mma_allocate, mma_deallocate, mma_maxDBLE
 use Constants, only: Zero, One
 use Definitions, only: wp, iwp, u6
@@ -48,7 +49,6 @@ integer(kind=iwp), intent(in) :: MXPDIM, IPCSF(MXPDIM), NCONF, IPCNF(NCONF), IPR
 real(kind=wp), intent(out) :: PHP(nTri_Elem(NPCSF)), DHAM(nTri_Elem(NPCSF))
 real(kind=wp), intent(in) :: EnIn, DTOC(*), ONEBOD(NACTOB,NACTOB), ECORE, TUVX(*), ExFac
 integer(kind=iwp), intent(inout) :: NTEST
-#include "spinfo.fh"
 integer(kind=iwp) :: iAlpha, IATYP, IIA, IIAB, IIL, IILACT, IILB, IIR, IIRACT, IIRB, IIRMAX, ILAI, ILRI, ILRO, ILTYP, IRTYP, ITYP, &
                      Mindex, MXCSFC, MXXWS, NCSFA, NCSFL, NCSFR, Nindex
 integer(kind=iwp), allocatable :: ICNL(:), ICNQ(:), ICNR(:)
@@ -112,7 +112,7 @@ if ((ITER /= 1) .or. (iterSplit /= 1)) then
   do iAlpha=NPCNF+1,NCONF ! Loop over alpha
     CNHCNM(:) = Zero
     !write(u6,*) 'iAlpha = ',iAlpha
-    call GETCNF_LUCIA(ICNL,IATYP,IPCNF(iAlpha),ICONF,IREFSM,NEL)
+    call GETCNF(ICNL,IATYP,IPCNF(iAlpha),ICONF,IREFSM,NEL)
     NCSFA = NCSFTP(IATYP)
     !write(u6,*) 'NCSFA = ',NCSFA
     call CNHCN(ICNL,IATYP,ICNL,IATYP,CNHCNM,SCR,NAEL,NBEL,ECORE,ONEBOD,IPRODT,DTOC,NACTOB,TUVX,NTEST,ExFac,IREOTS)
@@ -129,7 +129,7 @@ if ((ITER /= 1) .or. (iterSplit /= 1)) then
     do Mindex=1,NPCNF ! Loop over AB-Block
       CNHCNM(:) = Zero
       !write(u6,*) 'Mindex',Mindex
-      call GETCNF_LUCIA(ICNR,ILTYP,IPCNF(Mindex),ICONF,IREFSM,NEL)
+      call GETCNF(ICNR,ILTYP,IPCNF(Mindex),ICONF,IREFSM,NEL)
       NCSFL = NCSFTP(ILTYP)
       !write(u6,*) 'NCSFL = ',NCSFL
       call CNHCN(ICNL,IATYP,ICNR,ILTYP,CNHCNM,SCR,NAEL,NBEL,ECORE,ONEBOD,IPRODT,DTOC,NACTOB,TUVX,NTEST,ExFac,IREOTS)
@@ -171,7 +171,7 @@ IILB = 1
 do Nindex=1,NPCNF ! Loop over the AA-block (vertical index)
   if (NTEST >= 30) write(u6,*) 'Nindex',Nindex
   !write(u6,*) 'IILB',IILB
-  call GETCNF_LUCIA(ICNR,ILTYP,IPCNF(Nindex),ICONF,IREFSM,NEL)
+  call GETCNF(ICNR,ILTYP,IPCNF(Nindex),ICONF,IREFSM,NEL)
   NCSFL = NCSFTP(ILTYP)
   !write(u6,*) 'NCSFL = ',NCSFL
 
@@ -179,7 +179,7 @@ do Nindex=1,NPCNF ! Loop over the AA-block (vertical index)
   do Mindex=1,Nindex ! Loop over the AA-block (horizontal index)
     PHPS(:) = Zero
     !write(u6,*) 'Nindex,Mindex',Nindex,Mindex
-    call GETCNF_LUCIA(ICNQ,IRTYP,IPCNF(Mindex),ICONF,IREFSM,NEL)
+    call GETCNF(ICNQ,IRTYP,IPCNF(Mindex),ICONF,IREFSM,NEL)
     NCSFR = NCSFTP(IRTYP)
     !write(u6,*) 'NCSFR = ',NCSFR
     call CNHCN(ICNR,ILTYP,ICNQ,IRTYP,PHPS,SCR,NAEL,NBEL,ECORE,ONEBOD,IPRODT,DTOC,NACTOB,TUVX,NTEST,ExFac,IREOTS)

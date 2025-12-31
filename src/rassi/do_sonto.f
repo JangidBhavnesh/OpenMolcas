@@ -25,10 +25,10 @@
       use stdalloc, only: mma_allocate, mma_deallocate
       use cntrl, only: SONTOSTATES, SONTO
       use Cntrl, only: NSTATE, NOSO, MLTPLT
+      use rassi_data, only: NBST
       IMPLICIT None
       Integer NSS
       Real*8 USOR(NSS,NSS), USOI(NSS,NSS)
-#include "rassi.fh"
       Real*8 IDENTMAT(3,3)
       Real*8, Allocatable:: UMATR(:), UMATI(:), VMAT(:,:)
       Real*8, Allocatable:: TDMAO(:), TSDMAO(:)
@@ -104,7 +104,7 @@ c These states are stored as pairs beginning in SONTO
         INTOSTATE=SONTO(1,I)
         JNTOSTATE=SONTO(2,I)
         WRITE(6,*)
-        WRITE(6,*) "CALCULATING SO-NTOs BETWEEM SO STATES: ",
+        WRITE(6,*) "CALCULATING SO-NTOs BETWEEN SO STATES: ",
      &              INTOSTATE,JNTOSTATE
         IF((INTOSTATE.GT.NSS.OR.INTOSTATE.LE.0)
      & .or.(JNTOSTATE.GT.NSS.OR.JNTOSTATE.LE.0)) THEN

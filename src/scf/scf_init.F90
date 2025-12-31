@@ -25,11 +25,11 @@ use InfSCF, only: AccCon, AddFragments, C1DIIS, Damping, DelThr, DIIS, DIISTh, D
                   qNRTh, QudThr, RFPert, RGEK, RSRFO, rTemp, Scrmbl, TemFac, Thize, TimFld, TStop, Two_Thresholds, WarnCFG, &
                   WarnPOCC, WarnSlow, WrOutD
 use NDDO, only: twoel_NDDO
+use hfc_logical, only: UHF_HFC
 use Constants, only: Zero, One
 use Definitions, only: wp, iwp
 
 implicit none
-#include "hfc_logical.fh"
 integer(kind=iwp) :: iFMM, iPrintLevel, nData
 logical(kind=iwp) :: Found
 logical(kind=iwp), external :: Reduce_Prt
@@ -138,12 +138,12 @@ NamFld(5) = '  b ) contraction with integrals            :'
 NamFld(6) = '  c ) acceleration of convergence           :'
 NamFld(7) = '        recursive BFGS         (QNR steps)  :'
 NamFld(8) = '  d ) solution to Roothaan-Hall equations   :'
-NamFld(9) = '  d'') rotate MOs C with U      (QNR steps)  :'
+NamFld(9) = '  e ) rotate MOs C with U       (QNR steps) :'
 NamFld(10) = '        U=exp(kap)                          :'
-NamFld(11) = '          via Taylor expansion (sin/cos)    :'
-NamFld(12) = '          via transformation to Schur basis :'
-NamFld(13) = '  e'') transf. Fck Mat. with C  (QNR steps)  :'
-NamFld(14) = '  f ) other calculations                    :'
+NamFld(11) = '  f ) transformation to new reference       :'
+NamFld(12) = '  g ) s-GEK/RVO microiterations             :'
+NamFld(13) = '  h ) transf. Fck Mat. with C  (QNR steps)  :'
+NamFld(14) = '  i ) other calculations                    :'
 NamFld(15) = '3) Final processing (generation of outputs) :'
 NamFld(16) = '   T O T A L                                :'
 twoel_NDDO = .false.

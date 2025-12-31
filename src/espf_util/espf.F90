@@ -55,7 +55,7 @@ end if
 ! Set on the System Bit 11
 
 call Get_iScalar('System Bitswitch',iOption)
-iOption = ior(iOption,2**11)
+iOption = ibset(iOption,11)
 call Put_iScalar('System Bitswitch',iOption)
 
 ! Some initializations
@@ -73,7 +73,7 @@ isNAC_tmp = isNAC
 
 ! Read the input and compute the external potential
 
-call StatusLine(' espf:',' Reading input')
+call StatusLine('espf: ','Reading input')
 call ReadIn_ESPF(natom,Cord,Ext,MltOrd,iRMax,DeltaR,Forces,Show_espf,IsMM,StandAlone,iGrdTyp,DoTinker,DoGromacs,DynExtPot,Mltp, &
                  nAtMM,lMorok,DoDirect,GradCl,EnergyCl)
 
@@ -90,7 +90,7 @@ else
 
   ! Compute the grid around the molecule
 
-  call StatusLine(' espf:',' Making the grid')
+  call StatusLine('espf: ','Making the grid')
   if (iGrdTyp == 1) then
     if (nGrdPt == 0) call MkGrid(natom,Cord,Grid,nGrdPt,iRMax,DeltaR,Forces,IsMM,-iGrdTyp,DGrid,nAtQM)
     call MkGrid(natom,Cord,Grid,nGrdPt,iRMax,DeltaR,Forces,IsMM,iGrdTyp,DGrid,nAtQM)
@@ -128,7 +128,7 @@ else
     ! Here we must distinguish between an energy run and a gradient run
 
     if (.not. Forces) then
-      call StatusLine(' espf:',' Computing energy components')
+      call StatusLine('espf: ','Computing energy components')
       call Get_iArray('nBas',nBas,nSym)
       nBas0 = nBas(0)
       nSize = nTri_Elem(nBas0)+4
@@ -165,11 +165,11 @@ else
       if (iPL >= 3) write(u6,*) 'The 1-e hamiltonian is now updated.'
       if (iPL >= 2) write(u6,'(A,F16.10)') ' Nuclear energy, including Ext Pot = ',RepNuc
     else
-      call StatusLine(' espf:',' Computing gradient components')
+      call StatusLine('espf: ','Computing gradient components')
       call mma_allocate(GradCl%A,0,0,label='GradCl',safe='*')
       call espf_grad(natom,nGrdPt,nAtQM,Ext,Grid%A,B,DB,IsMM,GradCl%A,DoTinker,DoGromacs)
       call mma_allocate(Mltp%A,nMult,label='ESPFMltp',safe='*')
-      call espf_mltp(natom,MltOrd,nMult,nGrdPt,TTT,Mltp%A,Grid%A,IsMM,Ext,iPL)
+      call espf_mltp(natom,MltOrd,nMult,nGrdPt,TTT,Mltp%A,Grid%A,IsMM,Ext,iPL,Cord)
     end if
     Close_Seward = .true.
 

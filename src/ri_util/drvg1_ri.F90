@@ -11,6 +11,7 @@
 ! Copyright (C) 2007, Roland Lindh                                     *
 !***********************************************************************
 
+!#define _CD_TIMING_
 subroutine Drvg1_RI(Grad,Temp,nGrad)
 !***********************************************************************
 !                                                                      *
@@ -33,7 +34,10 @@ use Symmetry_Info, only: Mul, nIrrep
 use Para_Info, only: myRank, nProcs
 use Data_Structures, only: Deallocate_DT
 use RI_glob, only: DoCholExch, iMP2prpt, iUHF, LuAVector, LuBVector, LuCVector, nAdens, nAvec, nJdens, nKdens, nKvec, tavec, tbvec
-use Disp, only: ChDisp
+#ifdef _CD_TIMING_
+use temptime, only: CHOGET_CPU, CHOGET_WALL, DRVG1_CPU, DRVG1_WALL, PGET2_CPU, PGET2_WALL, PGET3_CPU, PGET3_WALL, PREPP_CPU, &
+                    PREPP_WALL, RMULT_CPU, RMULT_WALL, TWOEL2_CPU, TWOEL2_WALL, TWOEL3_CPU, TWOEL3_WALL
+#endif
 use stdalloc, only: mma_allocate, mma_deallocate
 use Constants, only: Zero, Two
 use Definitions, only: wp, iwp, u6
@@ -43,10 +47,6 @@ integer(kind=iwp), intent(in) :: nGrad
 real(kind=wp), intent(inout) :: Grad(nGrad)
 real(kind=wp), intent(out) :: Temp(nGrad)
 #include "print.fh"
-!#define _CD_TIMING_
-#ifdef _CD_TIMING_
-#include "temptime.fh"
-#endif
 integer(kind=iwp) :: i, iIrrep, ijsym, iOff, iPrint, irc, iRout, iSeed, iStart, isym, itmp, j, jStart, jSym, jtmp, kStart, kTmp, &
                      m_ij2K, mAO, nAct(0:7), nAux_Tot, nij_Eff, ntmp, nV_k_New, nVec, nZ_p_k_New, nZ_p_l
 real(kind=wp) :: BufFrac, TCpu1, TCpu2, TWall1, TWall2
@@ -95,9 +95,7 @@ end if
 
 iMp2Prpt = 0
 call Get_cArray('Relax Method',Method,8)
-if (Method == 'MBPT2   ') then
-  call Get_iScalar('mp2prpt',iMp2Prpt)
-end if
+if (Method == 'MBPT2   ') call Get_iScalar('mp2prpt',iMp2Prpt)
 !                                                                      *
 !***********************************************************************
 !                                                                      *
@@ -161,7 +159,8 @@ nKdens = nKdens+iUHF
 nKvec = nKdens
 
 if (lPSO .and. lSA) then
-  nJdens = 5
+  nJdens = 4
+  if ((Method == 'MCPDFT') .or.(Method == 'MSPDFT')) nJdens = 5
   nKdens = 4
   nKVec = 2
   nAdens = 2
@@ -192,7 +191,7 @@ if (lPSO) then
   call mma_allocate(DMdiag,nG1,nAdens,Label='DMdiag')
   call mma_allocate(DMtmp,nTri_Elem(nG1),Label='DMtmp')
   nnP(0:nIrrep-1) = 0
-  call Compute_txy(G1(1,1),nG1,Txy,n_Txy,nAdens,nIrrep,DMdiag,DMtmp,nAct)
+  call Compute_txy(G1,nG1,Txy,n_Txy,nAdens,nIrrep,DMdiag,DMtmp,nAct)
   call mma_deallocate(DMtmp)
 else
   call mma_allocate(Txy,1,1,Label='Txy')
@@ -392,7 +391,7 @@ end if
 Case_2C = .true.
 call Drvg1_2center_RI(Temp,Tmp,nGrad,ij2,nij_Eff)
 call GADGOP(Tmp,nGrad,'+')
-if (iPrint >= 15) call PrGrad(' RI-Two-electron contribution - 2-center term',Tmp,nGrad,ChDisp)
+if (iPrint >= 15) call PrGrad(' RI-Two-electron contribution - 2-center term',Tmp,nGrad)
 Grad(:) = Grad+Temp ! Move any 1-el contr.
 Temp(:) = -Tmp
 Case_2C = .false.
@@ -404,7 +403,7 @@ Case_2C = .false.
 Case_3C = .true.
 call Drvg1_3center_RI(Tmp,nGrad,ij2,nij_Eff)
 call GADGOP(Tmp,nGrad,'+')
-if (iPrint >= 15) call PrGrad(' RI-Two-electron contribution - 3-center term',Tmp,nGrad,ChDisp)
+if (iPrint >= 15) call PrGrad(' RI-Two-electron contribution - 3-center term',Tmp,nGrad)
 Temp(:) = Temp+Two*Tmp
 Case_3C = .false.
 call mma_deallocate(Txy,safe='*')
@@ -443,7 +442,7 @@ if (irc /= 0) then
   call Abend()
 end if
 call mma_deallocate(Tmp)
-if (iPrint >= 15) call PrGrad(' RI-Two-electron contribution - Temp',Temp,nGrad,ChDisp)
+if (iPrint >= 15) call PrGrad(' RI-Two-electron contribution - Temp',Temp,nGrad)
 !                                                                      *
 !***********************************************************************
 !                                                                      *

@@ -18,7 +18,7 @@ subroutine procinp_caspt2
                            ipea_shift, imag_shift, real_shift
   use caspt2_global, only: do_grad, do_nac, do_csf, do_lindep, &
                              if_invar, iRoot1, iRoot2, if_invaria, &
-                             ConvInvar, if_SSDM
+                             ConvInvar, if_equalW, if_SSDM, Weight
   use caspt2_global, only: IDCIEX
   use PrintLevel, only: terse
   use UnixInfo, only: SuperName
@@ -57,6 +57,7 @@ subroutine procinp_caspt2
   logical(kind=iwp) :: DNG, DNG_available
   integer(kind=iwp) :: iDNG
   integer(kind=iwp), external :: isStructure
+  logical(kind=iwp), external :: RF_On
 
   ! Hzero and Focktype are merged together into Hzero. We keep the
   ! variable Focktype not to break the input keyword which is documented
@@ -164,8 +165,8 @@ subroutine procinp_caspt2
   NTIT = 0
   OUTFMT = 'DEFAULT'
   G1SECIN = .FALSE.
-  PRORB = .TRUE.
-  PRSD = .FALSE.
+  PRORB = Input%PrOrb
+  PRSD = Input%PrSD
   NCASES = 13
 
   JMS = Input%JMS
@@ -539,8 +540,8 @@ subroutine procinp_caspt2
   ! check first if the user specifically asked for analytic gradients
   ! I think GRDT keyword should be ignored for numerical gradient and last energy
   do_lindep = .False.
-  if (input%GRDT .and. SuperName(1:18) /= 'numerical_gradient' .and. SuperName(1:11) /= 'last_energy') then
-    do_grad = Input%GRDT
+  if ((input%GRDT .or. input%NAC) .and. SuperName(1:18) /= 'numerical_gradient' .and. SuperName(1:11) /= 'last_energy') then
+    do_grad = Input%GRDT .or. input%NAC
 
     ! quit if both analytical and numerical gradients were explicitly requested
     if (DNG) then
@@ -580,10 +581,22 @@ subroutine procinp_caspt2
       call quit_onUserError()
     end if
 #ifdef _MOLCAS_MPP_
-    ! for the time being no gradients with MPI
+    ! No parallel without RI/CD
+    if ((.not. ifChol) .and. nProcs > 1) then
+      call warningMessage(2,'Analytic gradients without density fitting or Cholesky decomposition not available'//  &
+                            ' in parallel executions.')
+      call quit_onUserError
+    end if
+#endif
+
+#if defined (_MOLCAS_MPP_) && ! defined (_GA_)
+    ! for the time being no gradients without GA
+    ! Parallel CASPT2 gradient is implemented with some GA-specific subroutines
+    ! partially because I can use OpenMolcas only for which GA is required.
+    ! As long as OpenMolcas concerns, this should be no problem (at all)
     if (nProcs > 1) then
       call warningMessage(2,'Analytic gradients not available'//  &
-                            ' in parallel executions.')
+                            ' without GA installed. Install GA and link.')
       call quit_onUserError()
     end if
 #endif
@@ -597,22 +610,15 @@ subroutine procinp_caspt2
   ! gradients default in this case, unless the user specifically
   ! requested numerical gradients in GATEWAY
   if (isStructure() == 1) then
-    ! if MPI is enabled, analytic gradients only with one process
-#ifdef _MOLCAS_MPP_
-    if (nProcs == 1) then
-#endif
-      ! check the hard constraints first
-      if ((.not. DNG) .and. (nSym == 1)) then
-        do_grad = .true.
+    ! check the hard constraints first
+    if ((.not. DNG) .and. (nSym == 1)) then
+      do_grad = .true.
 
-        ! check weaker constraints, if not met, revert to numerical gradients
-        if (ifMSCoup .and. (.not. ifChol)) do_grad = .false.
-        if ((ipea_shift /= 0.0_wp) .and. (.not. ifChol)) do_grad = .false.
-        if ((nState /= nRoots) .and. (.not. ifsadref)) do_grad = .false.
-      end if
-#ifdef _MOLCAS_MPP_
+      ! check weaker constraints, if not met, revert to numerical gradients
+      if (ifMSCoup .and. (.not. ifChol)) do_grad = .false.
+      if ((ipea_shift /= 0.0_wp) .and. (.not. ifChol)) do_grad = .false.
+      if ((nState /= nRoots) .and. (.not. ifsadref)) do_grad = .false.
     end if
-#endif
   end if
 
   ! compute full unrelaxed density for gradients
@@ -659,6 +665,7 @@ subroutine procinp_caspt2
 
   if (do_nac) then
     do_csf = input%CSF
+    if (isStructure() == 1) do_csf = .false. !! omit the CSF term during (any) geometry optimizations
   end if
 
   IFSADREF   = input%SADREF
@@ -674,6 +681,11 @@ subroutine procinp_caspt2
     call quit_onUserError()
   end if
 
+  if (do_grad .and. RF_On() .and. .not.if_invar) then
+    call warningMessage(1,'Analytic gradients with IPEA shift'//  &
+                          ' and PCM is not fully analytic.')
+  end if
+
   !! Whether the Fock matrix (eigenvalues) is constructed with
   !! the state-averaged density matrix or not.
   !! The name of the variable is like state-specific DM,
@@ -687,6 +699,15 @@ subroutine procinp_caspt2
     if_SSDM = .false.
   else
     if_SSDM = .true.
+  end if
+
+  !! Check if unequal-weighted MCSCF or not. Used only for gradients.
+  if (do_grad) then
+    if (if_SSDM) if_equalW = .false.
+    do I = 2, nRoots
+      if (Weight(1).ne.Weight(I)) if_equalW = .false.
+    end do
+    if (.not.if_equalW) if_SSDM = .true.
   end if
 
   !! issue #448

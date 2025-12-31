@@ -85,7 +85,7 @@ subroutine refwfn_init(Filename)
 end subroutine refwfn_init
 
 !***********************************************************************
-subroutine refwfn_close
+subroutine refwfn_close()
 !***********************************************************************
 
 # ifdef _HDF5_
@@ -104,7 +104,7 @@ subroutine refwfn_close
 end subroutine refwfn_close
 
 !***********************************************************************
-subroutine refwfn_info
+subroutine refwfn_info()
 !***********************************************************************
 !SVC: initialize the reference wavefunction info
 
@@ -112,9 +112,10 @@ subroutine refwfn_info
   use qcmaquis_info, only: qcmaquis_info_init, qcm_group_names
 # endif
 # ifdef _HDF5_
-  use mh5, only: mh5_fetch_attr, mh5_exists_dset, mh5_fetch_dset
-  use stdalloc, only: mma_allocate, mma_deallocate
+  use mh5, only: mh5_fetch_attr, mh5_exists_attr, mh5_exists_dset, mh5_fetch_dset
 # endif
+  use caspt2_global, only: Weight_ => Weight
+  use stdalloc, only: mma_allocate, mma_deallocate
 
 # include "caspt2.fh"
 
@@ -146,6 +147,12 @@ subroutine refwfn_info
     call mh5_fetch_attr(refwfn_id,'NROOTS',lRoots)
     call mh5_fetch_attr(refwfn_id,'STATE_ROOTID',iRoot)
     call mh5_fetch_attr(refwfn_id,'STATE_WEIGHT',Weight)
+    if (mh5_exists_attr(refwfn_id,'NDET')) then
+      call mh5_fetch_attr(refwfn_id,'NDET',nDet)
+    else
+      ! to avoid runtime error
+      nDet = 1
+    end if
 
     call mma_allocate(typestring,sum(ref_nbas(1:nsym)))
     call mh5_fetch_dset(refwfn_id,'MO_TYPEINDICES',typestring)
@@ -167,12 +174,12 @@ subroutine refwfn_info
       call AbEnd()
     end if
     IFQCAN = 0
-# ifdef _DMRG_
+#   ifdef _DMRG_
     if (mh5_exists_dset(refwfn_id,'QCMAQUIS_CHECKPOINT')) then
       call qcmaquis_info_init(1,nroots,-1)
       call mh5_fetch_dset(refwfn_id,'QCMAQUIS_CHECKPOINT',qcm_group_names(1)%states)
     end if
-# endif
+#   endif
   else
 # endif
     ! Sizes in the GSLIST is counted in INTEGERS.
@@ -202,10 +209,16 @@ subroutine refwfn_info
     end do
   end if
 
+  if (ProgName(1:6) == 'caspt2') then
+    ! Weight_ is deallocated in PT2CLS()
+    call mma_allocate(Weight_,nRoots,Label='Weight')
+    Weight_(1:nRoots) = Weight(1:nRoots)
+  end if
+
 end subroutine refwfn_info
 
 !***********************************************************************
-subroutine refwfn_data
+subroutine refwfn_data()
 !***********************************************************************
 !SVC: initialize the reference wavefunction data
 
@@ -299,7 +312,7 @@ subroutine refwfn_data
         write(u6,*) ' Program error?? Must stop.'
         call ABEND()
       end if
-      ! This should be solved elsewhere in the code...just for the now,
+      ! This should be solved elsewhere in the code...just for now,
       ! make a write of a CI vector to LUCIEX, so other routines do not get
       ! their knickers into a twist:
       NCONF = 1

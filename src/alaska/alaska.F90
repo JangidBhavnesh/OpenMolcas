@@ -37,12 +37,13 @@ use OFembed, only: Do_OFemb
 use k2_arrays, only: DeDe
 use rctfld_module, only: iCharge_Ref, lLangevin, lMax, lRF, MM, NonEQ_Ref, PCM
 use pso_stuff, only: No_Nuc
-use Disp, only: ChDisp, HF_Force, IndxEq, InxDsp, lDisp, lEQ, TRSymm
+use Disp, only: HF_Force, IndxEq, InxDsp, lDisp, lEQ, TRSymm
 use NAC, only: DoCSF, EDiff, isNAC
 use spool, only: Close_LuSpool
 use stdalloc, only: mma_allocate, mma_deallocate
 use Constants, only: Zero, One, Half
 use Definitions, only: wp, iwp, u6
+use PCM_alaska, only: lSA, PCM_alaska_lSA, PCM_alaska_final, PCM_alaska_prep
 
 implicit none
 integer(kind=iwp), intent(in) :: LuSpool
@@ -96,6 +97,8 @@ if (RF_On()) then
     call Abend()
   end if
   call Init_RctFld(.false.,iCharge_Ref)
+  !! Check SA-CASSCF or not (and some initialization)
+  call PCM_alaska_lSA()
 end if
 !                                                                      *
 !***********************************************************************
@@ -139,6 +142,10 @@ call Close_LuSpool(LuSpool)
 call Get_iScalar('Columbus',Columbus)
 call Get_iScalar('colgradmode',colgradmode)
 
+! Some preparations for SA-CASSCF gradient
+! ASC charges have been overwritten in MCLR, so compute correct ones
+if (lRF .and. PCM .and. lSA) call PCM_alaska_prep()
+
 !-- Start computing the gradients
 !                                                                      *
 !***********************************************************************
@@ -148,14 +155,17 @@ call Get_iScalar('colgradmode',colgradmode)
 if (king() .or. HF_Force) then
 
   ! per default NADC must not have nuclear contributions added
+  ! If SA-CASSCF/PCM, call DrvN1 for PCM-related contributions
 
-  if (NO_NUC .or. ((Columbus == 1) .and. (colgradmode == 3))) then
+  if ((NO_NUC .and. (.not.(lRF .and. PCM .and. lSA))) .or. ((Columbus == 1) .and. (colgradmode == 3))) then
     write(u6,*) 'Skipping Nuclear Charge Contribution'
+    iRout = 33 !! as done in DrvN1
+    iPrint = nPrint(iRout)
   else
     call DrvN1(Grad,Temp,lDisp(0))
     if (iPrint >= 15) then
       Lab = ' Total Nuclear Contribution'
-      call PrGrad(Lab,Grad,lDisp(0),ChDisp)
+      call PrGrad(Lab,Grad,lDisp(0))
     end if
   end if
 end if
@@ -187,7 +197,7 @@ if (.not. Test) then
     call Drvh1_EMB(Grad,Temp,lDisp(0))
   end if
   !Lab = 'Nuc + One-electron Contribution'
-  !call PrGrad(Lab,Grad,lDisp(0),ChDisp)
+  !call PrGrad(Lab,Grad,lDisp(0))
   !                                                                    *
   !*********************************************************************
   !                                                                    *
@@ -225,7 +235,7 @@ if (.not. Test) then
     call DScal_(lDisp(0),Half,Temp,1)
     if (iPrint >= 15) then
       Lab = ' Two-electron Contribution'
-      call PrGrad(Lab,Temp,lDisp(0),ChDisp)
+      call PrGrad(Lab,Temp,lDisp(0))
     end if
 
     !-- Accumulate contribution to the gradient
@@ -248,7 +258,7 @@ if (.not. Test) then
 
   if (TRSymm) then
     if (iPrint >= 99) then
-      call PrGrad(' Molecular gradients (no TR) ',Grad,lDisp(0),ChDisp)
+      call PrGrad(' Molecular gradients (no TR) ',Grad,lDisp(0))
       call RecPrt(' The A matrix',' ',Am,lDisp(0),lDisp(0))
     end if
     Temp(1:lDisp(0)) = Grad(1:lDisp(0))
@@ -270,6 +280,7 @@ if (.not. Test) then
   !*********************************************************************
   !                                                                    *
 end if
+if (lRF) call PCM_alaska_final()
 !                                                                      *
 !***********************************************************************
 !                                                                      *
@@ -289,11 +300,11 @@ end do
 ! NOCSF was given, to avoid division by (nearly) zero
 
 if (isNAC) then
-  call PrGrad('CI derivative coupling ',Grad,lDisp(0),ChDisp)
+  call PrGrad('CI derivative coupling ',Grad,lDisp(0))
   if (DoCSF) then
     call mma_Allocate(CSFG,lDisp(0),Label='CSFG')
     call CSFGrad(CSFG,lDisp(0))
-    call PrGrad('CSF derivative coupling ',CSFG,lDisp(0),ChDisp)
+    call PrGrad('CSF derivative coupling ',CSFG,lDisp(0))
     call daxpy_(lDisp(0),EDiff,CSFG,1,Grad,1)
     call mma_deallocate(CSFG)
   end if
@@ -302,14 +313,14 @@ if (isNAC) then
   Label = 'Total derivative coupling'//trim(Label)
   call mma_allocate(Tmp,lDisp(0),Label='Tmp')
   Tmp(:) = Grad(:)/EDiff
-  call PrGrad(trim(Label),Tmp,lDisp(0),ChDisp)
+  call PrGrad(trim(Label),Tmp,lDisp(0))
   write(u6,'(15X,A,F12.4)') 'norm: ',dnrm2_(lDisp(0),Tmp,1)
   call mma_deallocate(Tmp)
 else if (iPrint >= 4) then
   if (HF_Force) then
-    call PrGrad('Hellmann-Feynman Forces ',Grad,lDisp(0),ChDisp)
+    call PrGrad('Hellmann-Feynman Forces ',Grad,lDisp(0))
   else
-    call PrGrad(' Molecular gradients',Grad,lDisp(0),ChDisp)
+    call PrGrad(' Molecular gradients',Grad,lDisp(0))
   end if
 end if
 if (isNAC) then

@@ -36,13 +36,14 @@ subroutine RDINT2(IPRX,DoTCVA)
 ! <TA/BU> IF ISQ > ISR AND ISP /= ISQ
 ! <TA/UB> IF ISQ >= ISS AND ISP /= ISQ
 !
-! IAD2M CONTAINS START ADRESS FOR EACH TYPE OF INTEGRALS:
+! IAD2M CONTAINS START ADDRESS FOR EACH TYPE OF INTEGRALS:
 ! IAD2M(1,iSymIJAB)   COULOMB INTEGRALS <AB|TU>
 ! IAD2M(2,iSymIJAB)   EXCHANGE INTEGRALS <AB|TU> FOR SYM T > SYM U
 ! IAD2M(3,iSymIJAB)   EXCHANGE INTEGRALS <AB|TU> FOR SYM T < SYM U
-! THE LAST ADRESS IS ZERO IF SYM T = SYM U
+! THE LAST ADDRESS IS ZERO IF SYM T = SYM U
 
 use caspt2_global, only: LUINTM
+use trafo, only: IAD13, ISR
 use stdalloc, only: mma_allocate, mma_deallocate
 use Definitions, only: wp, iwp, u6
 
@@ -55,7 +56,6 @@ integer(kind=iwp) :: i, IAD131, IAD132, IAD13C, IAD2M(3,36*36), IADC, IADX1, IAD
 logical(kind=iwp) :: Found
 real(kind=wp), allocatable :: Tmp(:)
 #include "caspt2.fh"
-#include "trafo.fh"
 
 ! GG-Dec04  The following informations must be passed to the Cholesky
 ! transformation section through RunFile. COMMON blocks could not be
@@ -96,7 +96,7 @@ write(u6,*) ' i,j are occupied MO indices'
 !write(u6,*) ' IAD2M(1,iSymIJAB)  COULOMB INTEGRALS <AB|TU>'
 !write(u6,*) ' IAD2M(2,iSymIJAB)  EXCHANGE INTEGRALS <AB|TU> FOR SYM T > SYM U'
 !write(u6,*) ' IAD2M(3,iSymIJAB)  EXCHANGE INTEGRALS <AB|TU> FOR SYM T < SYM U'
-!write(u6,*) ' THE LAST ADRESS IS ZERO IF SYM T = SYM U'
+!write(u6,*) ' THE LAST ADDRESS IS ZERO IF SYM T = SYM U'
 write(u6,*)
 write(u6,'(A,8I3)') '        Symmetries :',(i,i=1,nSym)
 write(u6,*)

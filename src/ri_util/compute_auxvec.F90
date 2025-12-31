@@ -105,7 +105,7 @@ if (nV_ls >= 1) then ! can be = 0 in a parallel run
 
   if (iMp2prpt /= 2) then
     if (DoCAS .and. lSA) then
-      nSA = 5
+      nSA = nJdens
       do i=1,nSA
         call Allocate_DT(DMLT(i),nBas,nBas,nSym,aCase='TRI')
         DMLT(i)%A0(:) = D0(:,i)
@@ -116,7 +116,7 @@ if (nV_ls >= 1) then ! can be = 0 in a parallel run
         do iBas=2,nBas(iIrrep)
           DMLT(1)%SB(iIrrep+1)%A1(ij+1:ij+iBas-1) = Two*DMLT(1)%SB(iIrrep+1)%A1(ij+1:ij+iBas-1)
           DMLT(3)%SB(iIrrep+1)%A1(ij+1:ij+iBas-1) = Two*DMLT(3)%SB(iIrrep+1)%A1(ij+1:ij+iBas-1)
-          DMLT(5)%SB(iIrrep+1)%A1(ij+1:ij+iBas-1) = Two*DMLT(5)%SB(iIrrep+1)%A1(ij+1:ij+iBas-1)
+          if (nSA > 4) DMLT(5)%SB(iIrrep+1)%A1(ij+1:ij+iBas-1) = Two*DMLT(5)%SB(iIrrep+1)%A1(ij+1:ij+iBas-1)
           ij = ij+iBas
         end do
       end do
@@ -425,7 +425,7 @@ if (DoExchange) then
   if (iMp2prpt == 2) then
     call Mult_with_Q_MP2(nBas_aux,nBas,nIrrep)
   else if (CASPT2) then
-    call Mult_with_Q_CASPT2(nBas_aux,nBas,nIrrep,Chol .and. (.not. Do_RI))
+    call Mult_with_Q_CASPT2(nBas_aux,nBas,nV_t,nIrrep,Chol .and. (.not. Do_RI))
   end if
 end if
 if (Chol .and. (.not. Do_RI)) nBas_Aux(0) = nBas_Aux(0)-1

@@ -16,11 +16,10 @@ set (sources
      chklumo.F90
      chkort.F90
      chktrd.F90
-     choscf_drv.F90
      cho_scf_rdinp.F90
+     choscf_drv.F90
      clsbuf.F90
      clsfls_scf.F90
-     CMakeLists.txt
      cre_scfwfn.F90
      davidson_scf.F90
      dcore.F90
@@ -29,8 +28,8 @@ set (sources
      dgrd.F90
      diis_i.F90
      diis_x.F90
-     dmat.F90
      dm_fno_rhf.F90
+     dmat.F90
      dmplls.F90
      dumpcmo.F90
      dumpeor.F90
@@ -38,6 +37,9 @@ set (sources
      egrad.F90
      eneclc.F90
      errv.F90
+     exp_series.F90
+     exp_series2.F90
+     exp_svd.F90
      expkap.F90
      fermipop.F90
      finalscf.F90
@@ -64,12 +66,11 @@ set (sources
      ivogen.F90
      kills.F90
      lnklst.F90
-     matexp.F90
      memalo.F90
      mk_eorb.F90
-     mkeorb_inner.F90
      mk_fockao.F90
      mk_fockmo.F90
+     mkeorb_inner.F90
      modens.F90
      modfck.F90
      mulpop.F90
@@ -77,19 +78,20 @@ set (sources
      neworb_scf.F90
      opnfls_scf.F90
      optclc.F90
+     optim.F90
      optim2.F90
      optim_e.F90
-     optim.F90
      ortho.F90
      orthox.F90
      ovldel.F90
      padcmo.F90
      padeor.F90
      pickup.F90
+     pmat_scf.F90
      prbeg.F90
+     prfin.F90
      prfin0.F90
      prfin2.F90
-     prfin.F90
      prite.F90
      r1ibas.F90
      r1inta.F90
@@ -104,39 +106,46 @@ set (sources
      reset_thresholds.F90
      rmldep.F90
      rotmos.F90
-     rs-rfo-scf.F90
+     rs_rfo_scf.F90
      rwdtg.F90
-     scf_energy.F90
+     s_gek_optimizer.F90
      scf.F90
-     scffiles.F90
+     scf_energy.F90
      scf_init.F90
      scf_mcontrol.F90
+     scffiles.F90
      scfwfn.F90
      scram.F90
      setup_scf.F90
-     s-gek-optimizer.F90
      soinih.F90
+     sorb.F90
      sorb2cmos.F90
      sorbcmos.F90
-     sorb.F90
      sorupv.F90
      start2.F90
      start3.F90
      start6.F90
      statlls.F90
-     stllst.F90
      swiopt.F90
      sym.F90
      trafck.F90
      trgen.F90
      trimcmo.F90
      trimeor.F90
-     tw_corr_drv.F90
      tw_corr.F90
+     tw_corr_drv.F90
      vecfind.F90
+     voo2ov.F90
      wfctl_scf.F90
      wrinp_scf.F90
      xclc.F90
+     fix_ref.F90
+     log_svd.F90
+     move_ref.F90
+     scf_gradient.F90
+     trg_series.F90
+     trg_svd.F90
+     trgrad.F90
 )
 
 include (${PROJECT_SOURCE_DIR}/cmake/prog_template.cmake)

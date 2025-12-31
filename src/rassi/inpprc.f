@@ -32,9 +32,11 @@
       use cntrl, only: nAtoms, Coor
       use cntrl, only: LuTDM, FnTDM
       use Symmetry_Info, only: nSym=>nIrrep
+      use rassi_data, only: NBSQ,NBMX,NBTRI,NBST,NCMO,NTRA,NTDMZZ,
+     &                      NTDMAB,NASHT,NISHT,NSSHT,NASH,NBASF,
+     &                      NBSQPR,NISH,NOSH,NSSH
 
       IMPLICIT None
-#include "rassi.fh"
       CHARACTER(LEN=8) LABEL
       CHARACTER(LEN=8) LABEL2
       CHARACTER(LEN=8) PRPLST(MXPROP)
@@ -99,8 +101,6 @@ C HOWEVER, MAX POSSIBLE SIZE IS WHEN LSYM1=LSYM2.
         NTRA=NTRA+NOSH(IS)**2
         NTDMZZ=NTDMZZ+NBASF(IS)**2
       END DO
-      NTDMS=(NTDMZZ+NBST)/2
-      NTDMA=NTDMS
       NTDMAB=NTRA
       SaveDens=(IFTRD1.OR.IFTDM).OR.
      &         (SONATNSTATE.GT.0).OR.(SONTOSTATES.GT.0)
@@ -1024,12 +1024,12 @@ C Write out various input data:
       END IF
       IF(IPGLOB.GE.2) THEN
        IF(NATO.AND.(NRNATO.GT.0)) THEN
-        WRITE(6,*)' Natural orbitals will be computed for the'
-        WRITE(6,*)' lowest eigenstates. NRNATO=',NRNATO
+        WRITE(6,*)' Natural orbitals will be computed for the'//
+     &            ' lowest eigenstates. NRNATO=',NRNATO
        END IF
        IF(BINA) THEN
-        WRITE(6,*)' Bi-natural orbitals will be computed for the'
-        WRITE(6,*)' following pairs of states:'
+        WRITE(6,*)' Bi-natural orbitals will be computed for the'//
+     &            ' following pairs of states:'
         WRITE(6,'(5X,8(2X,A1,I2,A1,I2,A1))')
      &             ('(',IBINA(1,I),',',IBINA(2,I),')',I=1,NBINA)
        END IF

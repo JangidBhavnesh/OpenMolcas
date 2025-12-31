@@ -244,10 +244,6 @@ else if ((Method == 'CASSCFSA') .or. (Method == 'RASSCFSA') .or. ((Method == 'DM
       write(mstate2,'(1X,I7,1X,I7)') 0,0
       call Put_cArray('MCLR Root',mstate2,16)
     end if
-  else if (iGO == -1) then
-    call WarningMessage(2,'Error in Alaska_Super_Driver')
-    write(u6,*) 'Gradients not implemented for SA-CASSCF with non-equivalent weights!'
-    call Abend()
   else
     if (iPL >= 3) then
       write(u6,*)
@@ -340,7 +336,7 @@ else if ((Method == 'MCPDFT') .or. (Method == 'MSPDFT')) then
   if (iGO == 99) then
     call WarningMessage(2,'Error in Alaska_Super_Driver')
     write(u6,*) 'MC-PDFT was run without the GRADient keyword.  Analytic gradients require this keyword.  Please use the '// &
-                'GRADient keyword in the preceeding MC-PDFT step.'
+                'GRADient keyword in the preceding MC-PDFT step.'
     call Abend()
   end if
 

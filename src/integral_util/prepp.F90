@@ -9,6 +9,7 @@
 ! LICENSE or in <http://www.gnu.org/licenses/>.                        *
 !                                                                      *
 ! Copyright (C) 1992, Roland Lindh                                     *
+!               2021, Yoshio Nishimoto                                 *
 !***********************************************************************
 
 !#define _DEBUGPRINT_
@@ -25,28 +26,30 @@ subroutine PrepP()
 
 use Index_Functions, only: nTri_Elem
 use setup, only: mSkal, nSOs
-use pso_stuff, only: Bin, Case_2C, Case_3C, Case_MP2, CMO, D0, DS, DSVar, DVar, FnGam, G1, G2, G_ToC, Gamma_MRCISD, Gamma_On, &
-                     iD0Lbl, KCMO, lBin, lPSO, lSA, LuGam, LuGamma, mCMO, mDens, mG1, mG2, nDens, nG1, nG2, SO2CI
-use iSD_data, only: iSO2Sh
-use Basis_Info, only: nBas
+use pso_stuff, only: A_PT2, B_PT2, Bin, Case_2C, Case_3C, Case_MP2, CASPT2_On, CMO, CMOPT2, D0, DS, DSVar, DVar, FnGam, G1, G2, &
+                     G_ToC, Gamma_MRCISD, Gamma_On, iD0Lbl, iOffAO, KCMO, lBin, lPSO, lSA, LuCMOPT2, LuGam, LuGamma, LuGamma_PT2, &
+                     mCMO, mG1, mG2, nBasA, nBasASQ, nBasT, nDens, nFro, nG1, nG2, nOcc, NSSDM, SO2CI, SSDM, Wrk1, Wrk2
+use iSD_data, only: iSD, iSO2Sh
+use Basis_Info, only: nBas, nBas_Aux
 use Sizes_of_Seward, only: S
 use Symmetry_Info, only: nIrrep
+use RICD_Info, only: Cholesky, Do_RI, Cholesky
+use dmrginfo, only: DoDMRG, LRRAS2
 use etwas, only: CoulFac, ExFac, mBas, mIrrep, nAsh, nCMO, nDSO, nIsh
 use NAC, only: IsNAC
-use mspdft_grad, only: DoGradMSPD
+#ifdef _CD_TIMING_
+use temptime, only: PREPP_CPU, PREPP_WALL
+#endif
 use stdalloc, only: mma_allocate, mma_deallocate
 use Constants, only: Zero, One, Half
 use Definitions, only: wp, iwp, u6
 
 implicit none
-#include "dmrginfo_mclr.fh"
-#ifdef _CD_TIMING_
-#include "temptime.fh"
-#endif
-integer(kind=iwp) :: Columbus, i, iBas, iDisk, iGo, iIrrep, ij, iSeed, iSpin, jBas, LgToC, n, nAct, nDim0, nDim1, nDim2, &
-                     nFro(0:7), nPair, nQUad, nSA, nShell, nTsT
+integer(kind=iwp) :: Columbus, i, iBas, iDisk, iGo, iIrrep, ij, iost, iSeed, iSh, iSpin, iSSDM, jBas, LgToC, lRealName, MaxShlAO, &
+                     mDens, MxInShl, n, nAct, nBasI, nDim0, nDim1, nDim2, nPair, nQUad, nSA, nShell, nTsT, nXro(0:7)
+character(len=4096) :: RealName
 real(kind=wp) :: CoefR, CoefX
-logical(kind=iwp) :: Do_Hybrid, DoCholesky
+logical(kind=iwp) :: Do_Hybrid, DoCholesky, is_error
 real(kind=wp) :: PDFT_Ratio, WF_Ratio
 character(len=80) :: KSDFT
 character(len=8) :: Method
@@ -57,6 +60,9 @@ character(len=60) :: Frmt
 character(len=8) :: RlxLbl
 integer(kind=iwp), parameter :: iComp = 1
 #endif
+#ifdef _CD_TIMING_
+real(kind=wp) :: PREPPCPU1, PREPPCPU2, PREPPWALL1, PREPPWALL2
+#endif
 integer(kind=iwp), external :: IsFreeUnit
 real(kind=wp), external :: Get_ExFac
 
@@ -66,7 +72,7 @@ real(kind=wp), external :: Get_ExFac
 call CWTIME(PreppCPU1,PreppWall1)
 #endif
 
-call StatusLine(' Alaska:',' Prepare the 2-particle matrix')
+call StatusLine('Alaska: ','Prepare the 2-particle matrix')
 
 iD0Lbl = 1
 
@@ -204,11 +210,7 @@ else if ((Method == 'RASSCF') .or. (Method == 'CASSCF') .or. (Method == 'GASSCF'
   if (Method == 'MSPDFT') write(u6,'(2A)') ' MS-PDFT Functional type:   ',KSDFT
   write(u6,*)
 # endif
-  if (Method == 'MCPDFT') lSA = .true.
-  if (Method == 'MSPDFT') then
-    lSA = .true.
-    dogradmspd = .true.
-  end if
+  if ((Method == 'MCPDFT') .or.(Method == 'MSPDFT')) lSA = .true.
   !                                                                    *
   !*********************************************************************
   !                                                                    *
@@ -232,19 +234,107 @@ else if ((Method == 'CASSCFSA') .or. (Method == 'DMRGSCFS') .or. (Method == 'GAS
   write(u6,*)
 # endif
   if (Method == 'CASPT2  ') then
+    CASPT2_On = .true.
     call DecideOnCholesky(DoCholesky)
     !if (.not. DoCholesky) then
     Gamma_On = .true.
     ! It is opened, but not used actually. I just want to
     ! use the Gamma_On flag.
     ! Just to avoid error termination.
-    ! Actual working arrys are allocated in drvg1.f
     LuGamma = 65
     call DaName_MF_WA(LuGamma,'GAMMA')
     if (DoCholesky) call mma_allocate(G_Toc,1,Label='G_Toc')
     call mma_allocate(SO2cI,1,1,Label='SO2cI')
     call mma_allocate(Bin,1,1,Label='Bin')
     !end if
+    if (Cholesky .or. Do_RI) then
+      nBasT = 0
+      nBasA = 0
+      nBasASQ = 0
+      do i=0,nIrrep-1
+        nBasT = nBasT+nBas(i)
+        nBasA = nBasA+nBas_Aux(i)-1
+        nBasASQ = nBasASQ+(nBas_Aux(i)-1)**2
+      end do
+      call mma_allocate(A_PT2,nBasA,nBasA,Label='A_PT2')
+
+      call Set_Basis_Mode('Valence')
+      call Setup_iSD()
+      MxInShl = 1
+      do i=1,mSkal
+        MxInShl = max(MxInShl,iSD(3,i)*iSD(2,i))
+      end do
+      call Free_iSD()
+      call mma_allocate(B_PT2,nBasA,MxInShl,MxInShl,Label='B_PT2')
+    else
+      nBasT = 0
+      do i=0,nIrrep-1
+        nBasT = nBasT+nBas(i)
+      end do
+
+      nSSDM = 0
+
+      ! The two MO indices in the half-transformed amplitude are
+      ! not CASSCF but quasi-canonical orbitals.
+      call mma_allocate(CMOPT2,nBasT*nBasT,Label='CMOPT2')
+      LuCMOPT2 = isFreeUnit(66)
+      call PrgmTranslate('CMOPT2',RealName,lRealName)
+      call MOLCAS_Open_Ext2(LuCMOPT2,RealName(1:lRealName),'DIRECT','UNFORMATTED',iost,.false.,1,'OLD',is_error)
+
+      do i=1,nBasT*nBasT
+        read(LuCMOPT2) CMOPT2(i)
+      end do
+
+      read(LuCMOPT2) nOcc(1)
+      read(LuCMOPT2) nOcc(2)
+      read(LuCMOPT2) nOcc(3)
+      read(LuCMOPT2) nOcc(4)
+      read(LuCMOPT2) nOcc(5)
+      read(LuCMOPT2) nOcc(6)
+      read(LuCMOPT2) nOcc(7)
+      read(LuCMOPT2) nOcc(8)
+      read(LuCMOPT2) nFro(1)
+      read(LuCMOPT2) nFro(2)
+      read(LuCMOPT2) nFro(3)
+      read(LuCMOPT2) nFro(4)
+      read(LuCMOPT2) nFro(5)
+      read(LuCMOPT2) nFro(6)
+      read(LuCMOPT2) nFro(7)
+      read(LuCMOPT2) nFro(8)
+      read(LuCMOPT2) nSSDM
+
+      if (nSSDM /= 0) then
+        call mma_allocate(SSDM,nBas(0)*(nBas(0)+1)/2,2,nSSDM,Label='SSDM')
+        do iSSDM=1,nSSDM
+          do i=1,nBas(0)*(nBas(0)+1)/2
+            read(LuCMOPT2) SSDM(i,1,iSSDM),SSDM(i,2,iSSDM)
+          end do
+        end do
+      end if
+
+      close(LuCMOPT2)
+
+      write(u6,*) 'Number of Non-Frozen Occupied Orbitals = ',nOcc(1)
+      write(u6,*) 'Number of     Frozen          Orbitals = ',nFro(1)
+
+      call mma_allocate(iOffAO,mSkal+1,Label='iOffAO')
+      MaxShlAO = 0
+      iOffAO(1) = 0
+      do iSh=1,mSkal
+        nBasI = iSD(2,iSh)*iSD(3,iSh)
+        if (nBasI > MaxShlAO) MaxShlAO = nBasI
+        iOffAO(iSh+1) = iOffAO(iSh)+nBasI
+      end do
+      call mma_allocate(G_toc,MaxShlAO**4,Label='GtocCASPT2')
+
+      LuGAMMA_PT2 = isFreeUnit(65)
+      call PrgmTranslate('GAMMA',RealName,lRealName)
+      call MOLCAS_Open_Ext2(LuGamma_PT2,RealName(1:lRealName),'DIRECT','UNFORMATTED',iost,.true.,nOcc(1)*nOcc(1)*8,'OLD',is_error)
+
+      call mma_allocate(WRK1,nOcc(1)*nOcc(1),Label='WRK1')
+      call mma_allocate(WRK2,MaxShlAO*nOcc(1),Label='WRK2')
+
+    end if
   end if
   Method = 'RASSCF  '
   !                                                                    *
@@ -261,13 +351,17 @@ end if
 ! Read the (non) variational 1st order density matrix
 ! density matrix in AO/SO basis
 nsa = 1
-if (lsa .or. (Method == 'MCPDFT') .or. (Method == 'MSPDFT')) nsa = 5
-!AMS modification: add a fifth density slot
-mDens = nsa+1
+if (lsa) nsa = 4
+mDens = nsa
+if ((Method == 'MCPDFT') .or. (Method == 'MSPDFT')) then
+  nsa = 5
+  !AMS modification: add another density slot
+  mDens = nsa+1
+end if
 call mma_allocate(D0,nDens,mDens,Label='D0')
 D0(:,:) = Zero
 call mma_allocate(DVar,nDens,nsa,Label='DVar')
-if (.not. gamma_mrcisd) call Get_dArray_chk('D1ao',D0(1,1),nDens)
+if (.not. gamma_mrcisd) call Get_dArray_chk('D1ao',D0(:,1),nDens)
 
 call Get_D1ao_Var(DVar,nDens)
 
@@ -344,18 +438,18 @@ if (lpso .and. (.not. gamma_mrcisd)) then
   call Get_iScalar('nSym',i)
   call Get_iArray('nIsh',nIsh,i)
   call Get_iArray('nAsh',nAsh,i)
-  call Get_iArray('nFro',nFro,i)
+  call Get_iArray('nFro',nXro,i)
 # ifdef _DEBUGPRINT_
   write(u6,*) ' nISh=',nISh
   write(u6,*) ' nASh=',nASh
-  write(u6,*) ' nFro=',nFro
+  write(u6,*) ' nFro=',nXro
 # endif
   nAct = 0
   nTst = 0
   do iIrrep=0,nIrrep-1
     !write(u6,*)"nAsh(iIrrep)",nAsh(iIrrep)  ! yma
     nAct = nAct+nAsh(iIrrep)
-    nTst = nTst+nFro(iIrrep)
+    nTst = nTst+nXro(iIrrep)
   end do
   if (nTst /= 0) then
     call WarningMessage(2,'; No frozen orbitals are allowed!; ALASKA cannot continue;')
@@ -414,7 +508,7 @@ if (lpso .and. (.not. gamma_mrcisd)) then
     call Get_dArray_chk('PLMO',G2(:,2),nG2)
     ndim1 = 0
     if (doDMRG) then
-      ndim0 = sum(LRras2(1:8))  !yma
+      ndim0 = sum(LRras2(:))  !yma
       ndim1 = nTri_Elem(ndim0)
       ndim2 = nTri_Elem(ndim1)
       do i=1,ng2
@@ -452,7 +546,7 @@ if (lpso .and. (.not. gamma_mrcisd)) then
     !call PrMtrx(RlxLbl,iD0Lbl,iComp,[1],D0)
 
     call mma_allocate(Tmp,nDens,2,Label='Tmp')
-    call Get_D1I(CMO(1,1),D0(1,1),Tmp,nIsh,nBas,nIrrep)
+    call Get_D1I(CMO(:,1),D0(:,1),Tmp,nIsh,nBas,nIrrep)
     call mma_deallocate(Tmp)
 
     !************************
@@ -465,18 +559,18 @@ if (lpso .and. (.not. gamma_mrcisd)) then
       D0(:,2) = DVar(:,1)-Half*D0(:,1)
     end if
     !RlxLbl = 'D1COMBO  '
-    !call PrMtrx(RlxLbl,iD0Lbl,iComp,[1],D0(1,2))
+    !call PrMtrx(RlxLbl,iD0Lbl,iComp,[1],D0(:,2))
 
     ! This is necessary for the kap-lag
 
     nG1 = nTri_Elem(nAct)
     call mma_allocate(D1AV,nG1,Label='D1AV')
     call Get_dArray_chk('D1av',D1AV,nG1)
-    call Get_D1A(CMO(1,1),D1AV,D0(1,3),nIrrep,nbas,nish,nash,ndens)
+    call Get_D1A(CMO(:,1),D1AV,D0(:,3),nIrrep,nbas,nish,nash,ndens)
     call mma_deallocate(D1AV)
     !************************
     !RlxLbl = 'D1AOA   '
-    !call PrMtrx(RlxLbl,iD0Lbl,iComp,[1],D0(1,3))
+    !call PrMtrx(RlxLbl,iD0Lbl,iComp,[1],D0(:,3))
 
     call Get_dArray_chk('DLAO',D0(:,4),nDens)
 

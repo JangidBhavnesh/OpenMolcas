@@ -25,11 +25,13 @@
      &                     Half, Two
       use Cntrl, only: NSTATE, NPROP, DIPR, OSThr_Dipr, QIPR,
      &                 OSThr_QIPR, RSPR, RSThr, REDUCELOOP, LOOPDIVIDE,
+     &                 LOOPMAX,
      &                 Do_SK, nQuad, PrRaw, PrWeight, Do_Pol, TMGR_Thrs,
      &                 lSym1, lSym2, L_Eff, ICOMP, IRREP, MLTPLT, PNAME,
      &                 PTYPE
       use cntrl, only: LuTDM
       use Symmetry_Info, only: nSym=>nIrrep, MUL
+      use rassi_data, only: NBST,NBASF,NTDMZZ
 
       IMPLICIT None
       Integer NSS
@@ -39,11 +41,9 @@
       Real*8 EigVec(NSTATE,NSTATE)
 
       Real*8, parameter ::THRSH=1.0D-10
-#include "rassi.fh"
       LOGICAL TMOgroup
       INTEGER IOFF(8),IJSS(4),IPRTMOM(14)
       CHARACTER(LEN=8) LABEL
-      CHARACTER(LEN=6) STLNE1
       CHARACTER(LEN=52) STLNE2
       Integer, Dimension(:), Allocatable :: TMOgrp1,TMOgrp2,ISS_INDEX,
      &   iMask,jMask,iSSMask,jSSMask
@@ -71,7 +71,7 @@
      &       TM_2, TM3, RNG, ANG, F_temp, R_temp, F, R, F_Check,
      &       R_Check, A, TCPU1, TCPU2, TWALL1, TWALL2
       REAL*8, External:: DDot_
-      Integer IEND, JSTart, IPROP, NDIFF, NVEC, NSCR, NIP,
+      Integer IEND, JSTart, JEnd, IPROP, NDIFF, NVEC, NSCR, NIP,
      &                                           NGROUP1, NGROUP2,
      &        NMAX2, I, J, nTmp, MaxGrp1, MaxGrp2, lRaw, iVec, iPrint,
      &        ijSO, iState, Job, iGrp, iStart_, iEnd_, ISM, ISSM, ISF,
@@ -134,9 +134,11 @@ C printing threshold
 !     Reducing the loop over states - good for X-rays
 !     At the moment memory is not reduced
 !
+      JEND = NSS
       IF(REDUCELOOP) THEN
         IEND = LOOPDIVIDE
         JSTART = LOOPDIVIDE+1
+        IF(LOOPMAX.GT.0) JEND=MIN(NSS, LOOPDIVIDE + LOOPMAX)
       ELSE
         IEND = NSS
         JSTART = 1
@@ -277,7 +279,7 @@ C     ALLOCATE A BUFFER FOR READING ONE-ELECTRON INTEGRALS
 *MGD group transitions
       TMOgroup=.false.
       ngroup1=IEND
-      ngroup2=NSS-JSTART+1
+      ngroup2=JEND-JSTART+1
       nmax2=1
       IF(REDUCELOOP.and.TMGr_thrs.ge.0.0d0) THEN
         TMOgroup=.true.
@@ -286,7 +288,7 @@ C     ALLOCATE A BUFFER FOR READING ONE-ELECTRON INTEGRALS
         RefEne=0
         TAU=-1
         ngroup2=1
-        Do j=JSTART,NSS
+        Do j=JSTART,JEND
           if (ENSOR(J)-Refene.gt.TAU) then
               NGROUP2=NGROUP2+1
               Refene=ENSOR(J)
@@ -298,7 +300,7 @@ C     ALLOCATE A BUFFER FOR READING ONE-ELECTRON INTEGRALS
         ngroup2=0
         TAU=-1
         RefEne=0
-        Do j=JSTART,NSS
+        Do j=JSTART,JEND
           if (ENSOR(J)-Refene.gt.TAU) then
               NGROUP2=NGROUP2+1
               TMOgrp2(NGROUP2)=J
@@ -450,10 +452,9 @@ C     ALLOCATE A BUFFER FOR READING ONE-ELECTRON INTEGRALS
             IJSS(3)=jstart_
             IJSS(4)=jend_
 *
-            WRITE(STLNE1,'(A6)') 'RASSI:'
             WRITE(STLNE2,'(A33,I5,A5,I5)')
      &         'Trans. intensities for SO groups ',igrp,' and ',jgrp
-            Call StatusLine(STLNE1,STLNE2)
+            Call StatusLine('RASSI: ',STLNE2)
 *
             IF (ABS(EDIFF_).LE.1.0D-8) CYCLE
             IF(EDIFF_.LT.0.0D0) CYCLE

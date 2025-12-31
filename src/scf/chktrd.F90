@@ -21,7 +21,7 @@ subroutine ChkTrD(nSym,nBas,nOrb,Occ,nOcc,Dlt,nDlt)
 !       nSym    : number of symmetries                                 *
 !       nBas(i) : number of basis functions (i = 1, nSym)              *
 !       Occ     : occupation numbers                                   *
-!       Dlt     : density matrix in triangular storrage                *
+!       Dlt     : density matrix in triangular storage                 *
 !                                                                      *
 !***********************************************************************
 
@@ -44,6 +44,7 @@ ipOcc = 0
 Scal = One
 do iSym=1,nSym
   nBs = nBas(iSym)
+  if (nBs < 1) cycle
   nOr = nOrb(iSym)
   lth = nTri_Elem(nBs)
   ! count occupation number...

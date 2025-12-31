@@ -18,8 +18,7 @@
 *> @author  P. &Aring;. Malmqvist
 *>
 *> @details
-*> Sets values in common blocks in general.fh, timers.fh and module
-*> rasscf_global.F90.
+*> Sets values in the modules timers, rasscf_global and general_data.
 ************************************************************************
 
       Subroutine RasScf_Init()
@@ -31,6 +30,11 @@
       use CMS, only: iCMSOpt,CMSGiveOpt
       use UnixInfo, only: SuperName
       use gas_data, only: NGAS, NGSSH, IGSOCCX
+      use timers, only: TimeAoMo, TimeCIOpt, TimeDavid, TimeDens,
+     &                  TimeFock, TimeHCSCE, TimeHDiag, TimeHSel,
+     &                  TimeInput, TimeOrb, TimePage, TimeRelax,
+     &                  TimeSigma, TimeTotal, TimeTrans, TimeWfn
+      use lucia_data, only: TDENSI, TSIGMA
       use rasscf_global, only: IROOT, CMSStartMat, CMSThreshold,
      &                         CORESHIFT, Ener, ExFac, hRoots,
      &                         iAlphaBeta, ICICH, ICICP, iCIonly,
@@ -47,13 +51,15 @@
      &                         QNUPDT, RFPert, SXSel, ThFact, Thre,
      &                         ThrEn, ThrSX, TMin, Weight, Title,
      &                         ixSym, iTri, ThrTE
+      use output_ras, only: LF
+      use general_data, only: SXDAMP,NSEL,LOWDIN_ON,ISPIN,STSYM,NACTEL,
+     &                        NHOLE1,NELEC3,NALTER,STARTORBFILE,NASH,
+     &                        NBAS,NDEL,NFRO,NISH,NRS1,NRS2,NRS3,NRS3,
+     &                        NSSH
+      use spinfo, only: I_ELIMINATE_GAS_MOLCAS,ISPEED
 
       Implicit None
 #include "rasdim.fh"
-#include "general.fh"
-#include "output_ras.fh"
-#include "timers.fh"
-#include "lucia_ini.fh"
       Integer IPRGLB_IN, IPRLOC_IN(7)
 * What to do with Cholesky stuff?
       Logical, External :: Is_First_Iter
@@ -83,7 +89,7 @@ C        ICIRST=1 ! to be activated!
          ICIRST=0
       End If
 
-* Initialize print levels: See output_ras.fh
+* Initialize print levels: Module output_ras
 * Global logical unit numbers for standard output
       LF=6
 * Externally set default print level control. Should the program be silent?
@@ -321,7 +327,7 @@ C
 *
 * Initialize speed options (turn everything that's working on)
 *
-      Do i = 1,nSpeed
+      Do i = 1,size(iSpeed)
          if (i .le. 2) Then
             iSpeed(i) = 1
          else
@@ -330,26 +336,26 @@ C The rest is at the present time just to allow testing
          end if
       End Do
 *
-      Ebel_3     = 0.0d0
-      Eterna_3   = 0.0d0
-      Rado_3     = 0.0d0
-      Rolex_3    = 0.0d0
-      Omega_3    = 0.0d0
-      Tissot_3   = 0.0d0
-      Piaget_3   = 0.0d0
-      Candino_3  = 0.0d0
-      Fortis_3   = 0.0d0
-      Zenith_3   = 0.0d0
-      Gucci_3    = 0.0d0
-      Alfex_3    = 0.0d0
-      WTC_3      = 0.0d0
-      Longines_3 = 0.0d0
-      Oris_2     = 0.0d0
-      Movado_2   = 0.0d0
+      TimeTotal  = 0.0d0
+      TimeInput  = 0.0d0
+      TimeWfn    = 0.0d0
+      TimeDens   = 0.0d0
+      TimeSigma  = 0.0d0
+      TimeHSel   = 0.0d0
+      TimeHDiag  = 0.0d0
+      TimeFock   = 0.0d0
+      TimeAoMo   = 0.0d0
+      TimeTrans  = 0.0d0
+      TimeCIOpt  = 0.0d0
+      TimeOrb    = 0.0d0
+      TimeDavid  = 0.0d0
+      TimePage   = 0.0d0
+      TimeHCSCE  = 0.0d0
+      TimeRelax  = 0.0d0
 *
 CSVC: lucia timers
-      tsigma = 0.0d0
-      tdensi = 0.0d0
+      tsigma(:) = 0.0d0
+      tdensi(:) = 0.0d0
 *
 C state rotation
       iRotPsi=0
@@ -362,4 +368,4 @@ C state rotation
       iCMSOpt=1
       CMSGiveOpt=.false.
       RETURN
-      END
+      END Subroutine RasScf_Init

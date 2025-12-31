@@ -13,8 +13,8 @@
 
 subroutine Driver(KSDFA,Do_Grad,Func,Grad,nGrad,Do_MO,Do_TwoEl,D_DS,F_DFT,nh1,nD,DFTFOCK)
 
-use libxc_parameters, only: Coeffs, func_id, initiate_libxc_functionals, libxc_functionals, nFuncs, nFuncs_max, &
-                            remove_libxc_functionals, lExtParams, Set_External_Params
+use libxc_parameters, only: Coeffs, func_id, initiate_libxc_functionals, lExtParams, libxc_functionals, nFuncs, nFuncs_max, &
+                            remove_libxc_functionals, Set_External_Params
 use xc_f03_lib_m, only: XC_CORRELATION, XC_EXCHANGE, xc_f03_func_end, xc_f03_func_get_info, xc_f03_func_info_get_kind, &
                         xc_f03_func_init, xc_f03_func_t, xc_f03_func_info_t, xc_f03_functional_get_number, XC_UNPOLARIZED
 use Functionals, only: Get_Funcs
@@ -122,7 +122,7 @@ select case (FLabel)
     Functional_type = LDA_type
 
     nFuncs = 1
-    func_id(1:nFuncs) = [xc_f03_functional_get_number('XC_LDA_K_TF')]
+    func_id(1) = xc_f03_functional_get_number('XC_LDA_K_TF')
   !                                                                    *
   !*********************************************************************
   !                                                                    *
@@ -132,7 +132,7 @@ select case (FLabel)
     Functional_type = GGA_type
 
     nFuncs = 1
-    func_id(1:nFuncs) = [xc_f03_functional_get_number('XC_GGA_K_TFVW')]
+    func_id(1) = xc_f03_functional_get_number('XC_GGA_K_TFVW')
     Only_exc = .true.
   !                                                                    *
   !*********************************************************************

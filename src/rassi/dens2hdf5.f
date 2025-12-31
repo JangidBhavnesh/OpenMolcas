@@ -39,21 +39,24 @@
 ************************************************************************
       Subroutine UpdateIdx(IndexE, nSS, USOR, USOI, MapSt)
       Use stdalloc, Only: mma_allocate
-      use Cntrl, only: NSTATE, REDUCELOOP, LOOPDIVIDE
+      use Cntrl, only: NSTATE, REDUCELOOP, LOOPDIVIDE, LOOPMAX
       Implicit None
       Integer, Dimension(nState), Intent(In) :: IndexE
       Integer, Intent(In) :: nSS
       Real*8, Intent(In), Optional :: USOR(nSS,nSS),USOI(nSS,nSS)
       Integer, Intent(In), Optional :: MapSt(nSS)
-      Integer :: i,j,i_,j_,iState,jState,iSS,jSS,iEnd,jStart
+      Integer :: i,j,i_,j_,iState,jState,iSS,jSS,iEnd,jStart,jEnd
       Real*8 :: f1,f2
       If (.not.Allocated(IdxState)) Then
         Call mma_Allocate(IdxState,nState,nState,Label='IdxState')
         Call iCopy(nState**2,[0],0,IdxState,1)
       End If
+      jEnd=nState
+      If (nSS.gt.0) jEnd=nSS
       If (ReduceLoop) Then
         iEnd=LoopDivide
         jStart=LoopDivide+1
+        If (LoopMax.gt.0) jEnd=Min(jEnd, LoopDivide + LoopMax)
       Else
         iEnd=nState
         If (nSS.gt.0) iEnd=nSS
@@ -63,8 +66,11 @@
       If (nSS.gt.0) Then
         Do iSS=1,nSS
           Do jSS=1,nSS
-            If ((jSS.ne.iSS).and.
-     &          ((jSS.lt.jStart).or.(iSS.gt.iEnd))) Cycle
+            If (jSS.ne.iSS) Then
+              If (jSS.lt.jStart) Cycle
+              If (iSS.gt.iEnd)   Cycle
+              If (jSS.gt.jEnd)   Cycle
+            End If
             Do i=1,nSS
               iState=MapSt(i)
               Do j=1,i
@@ -88,6 +94,7 @@
           IdxState(iState,iState)=1
           If (i.gt.iEnd) Cycle
           Do j=Max(i+1,jStart),nState
+            If (j.gt.jEnd) Cycle
             jState=IndexE(j)
             i_=Max(jState,iState)
             j_=Min(jState,iState)
@@ -121,9 +128,9 @@
       use cntrl, only: LuTDM
       use RASSIWfn, only: wfn_SFS_TDM, wfn_SFS_TSDM, wfn_SFS_WETDM
       use Symmetry_Info, only: nSym=>nIrrep, MUL
+      use rassi_data, only: NBASF,NTDMZZ
 
       Implicit None
-#include "rassi.fh"
       Real*8, Intent(In) :: EigVec(nState,nState)
       Integer :: iState,jState,k,l,nThisTDMZZ
       Integer :: Job1,Job2,iSym1,iSym2,iSy12,iDisk,iEmpty,iOpt,iGo
@@ -240,10 +247,10 @@ C Transform TDMs to SF eigenstates
       Subroutine Transpose_TDM(TDM,Symmetry)
       Use stdalloc, Only: mma_allocate, mma_deallocate
       use Symmetry_Info, only: nSym=>nIrrep, MUL
+      use rassi_data, only: NBASF
       Implicit None
       Real*8, Intent(InOut) :: TDM(*)
       Integer, Intent(In) :: Symmetry
-#include "rassi.fh"
       Integer :: iSym1,iSym2,nTot,i,j
       Integer :: iBlock(0:8)
       Real*8, Allocatable :: Tmp(:)

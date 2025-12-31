@@ -27,7 +27,7 @@
 #endif
 #endif
       use csfbas, only: CONF
-      use glbbas, only: CFTP
+      use lucia_data, only: CFTP
       use Fock_util_global, only: DoCholesky
       use Cholesky, only: ChFracMem
       use write_orbital_files, only: OrbFiles, write_orb_per_iter
@@ -61,11 +61,6 @@
       use gas_data, only: iDoGAS, NGAS, NGSSH, IGSOCCX
       use Symmetry_info, only: Mul
       use input_ras   ! It should be without the only option!
-#ifdef _WARNING_WORKAROUND_
-      use input_ras
-#else
-      use input_ras, hide1=>nKeys, hide2=>KeyFlags, hide3=>CMD
-#endif
       use rasscf_global, only: KSDFT, IROOT, IRLXROOT, ICI, CCI,
      &                         HFOCC, CMSStartMat, CMSThreshold,
      &                         CoreShift, DFTFOCK, DoBLOCKDMRG,
@@ -100,20 +95,40 @@
      &                         ChemPS2_Noise, Max_Canonical, MxDMRG,
      &                         Do3RDM
 #endif
+      use SplitCas_Data, only: DoSPlitCas,MxIterSplit,ThrSplit,
+     &                         lRootSplit,NumSplit,EnerSplit,
+     &                         PerSplit,PerCSpli,fOrdSplit,
+     &                         iDimBlockA,GapSpli
+      use printlevel, only: DEBUG,VERBOSE,TERSE
+      use output_ras, only: LF,IPRGLB,IPRLOC
+      use general_data, only: MAXALTER,NALTER,JOBIPH,NSYM,INVEC,
+     &                        STARTORBFILE,NBAS,LUSTARTORB,JOBOLD,NTOT,
+     &                        NTOT1,NTOT2,NDELT,NFROT,NTOTSP,NRS1T,
+     &                        NRS2T,NRS3T,NACTEL,NHOLE1,NELEC3,ISPIN,
+     &                        STSYM,NSEL,SXDAMP,LOWDIN_ON,NISH,NCRVEC,
+     &                        NRS1,NRS2,NRS3,NCONF,MALTER,NASH,
+     &                        NDEL,NFRO,NORB,NSSH
+      use spinfo, only: MS2
+      use spinfo, only: NDET,NCSASM,NDTASM
+      use spinfo, only: NSYM_MOLCAS,NACTEL_MOLCAS,MS2_MOLCAS,
+     &                  ISPIN_MOLCAS,LSYM_MOLCAS,NROOTS_MOLCAS,
+     &                  NGAS_MOLCAS,THRE_MOLCAS,ITMAX_MOLCAS,
+     &                  INOCALC_MOLCAS,ISAVE_EXP_MOLCAS,IEXPAND_MOLCAS,
+     &                  IPT2_MOLCAS,I_ELIMINATE_GAS_MOLCAS,
+     &                  N_ELIMINATED_GAS_MOLCAS,
+     &                  N_2ELIMINATED_GAS_MOLCAS,IPRCI_MOLCAS,
+     &                  POTNUC_MOLCAS,
+     &                  I2ELIMINATED_IN_GAS_MOLCAS,
+     &                  IELIMINATED_IN_GAS_MOLCAS,IGSOCCX_MOLCAS,
+     &                  ISPEED,NGSSH_MOLCAS
+      use spinfo, only: DOBKAP,NGASBK,IOCCPSPC
+      use DWSol, only: DWSol_DWRO
 
 
       Implicit None
-#include "SysDef.fh"
 #include "rasdim.fh"
-#include "general.fh"
 #include "warnings.h"
-#include "splitcas.fh"
-#include "bk_approx.fh"
-#include "output_ras.fh"
 * Lucia-stuff:
-#include "ciinfo.fh"
-#include "spinfo.fh"
-#include "lucia_ini.fh"
 *
 *
       logical lOPTO
@@ -182,7 +197,7 @@
 
       Real*8 dSum, dum1, dum2,dum3, Eterna_2, POTNUCDUMMY, PRO, SUHF,
      &       TEffNChrg, TotChrg, Eterna_1
-      Integer, External:: IsFreeUnit
+      Integer, External:: IsFreeUnit, nToken
       Integer i, i1, i2, iad19, iChng1, iChng2, iDisk, iEnd, iErr,
      &        iGAS, iGrp, ii, ij, iJOB, inporb_version, iod_save,
      &        iOffSet, iOrb, iOrbData, iPrLev, iR, iRC1, iRef, iReturn,
@@ -190,7 +205,7 @@
      &        korb, kref,           mBas, mCof, mConf, mm, mOrb, N, NA,
      &        NAO, NASHT, NCHRG, nClean, nCof, nDiff, nGrp, NGSSH_HI,
      &        NGSSH_LO, NISHT, nItems, nNUc, nOrbRoot, nOrbs,
-     &        nSym_l, nT, nU, nW, iAll, iAlter, NISHT_old
+     &        nSym_l, nT, nU, nW, iAll, iAlter, NISHT_old, NCRPROJ
 #ifdef _HDF5_
       Integer mh5id, lRoots_l
 #endif
@@ -819,11 +834,11 @@ C   No changing about read in orbital information from INPORB yet.
       If (DBG) Write(6,*) ' Purify=',PURIFY
 
 *---  process KSDF command --------------------------------------------*
-      If (DBG) Write(6,*) ' Check if KSDFT was requested.'
-      If (KeyKSDF) Then
-       If (DBG) Write(6,*) ' KSDFT command was given.'
+      If (DBG) Write(6,*) ' Check if FUNCtional was requested.'
+      If (KeyFUNC) Then
+       If (DBG) Write(6,*) ' FUNC command was given.'
        DFTFOCK='CAS '
-       Call SetPos(LUInput,'KSDF',Line,iRc)
+       Call SetPos(LUInput,'FUNC',Line,iRc)
        If(iRc.ne._RC_ALL_IS_WELL_) GoTo 9810
        Read(LUInput,*,End=9910,Err=9920) Line
        Call UpCase(Line)
@@ -997,9 +1012,19 @@ C         call fileorb(Line,CMSStartMat)
       If(KeyRFRO) Then
        Call SetPos(LUInput,'RFRO',Line,iRc)
        If(iRc.ne._RC_ALL_IS_WELL_) GoTo 9810
+       Line=Get_Ln(LUInput)
+       Line(80:80)='0'
+       JPCMROOT = 0
+       iall = 0
        ReadStatus=' Failure reading IPCMROOT after RFROOT keyword.'
-       Read(LUInput,*,End=9910,Err=9920) IPCMROOT
+       if (nToken(Line) >= 3) then
+         Read(Line,*,End=9910,Err=9920) IPCMROOT,JPCMROOT,iall
+         call DWSol_DWRO(LuInput,IPCMROOT,iall)
+       else
+         Read(Line,*,End=9910,Err=9920) IPCMROOT
+       end if
        ReadStatus=' O.K. reading IPCMROOT after RFROOT keyword.'
+
 *
 *      Check that the root value is not changed explicitly by input
 *
@@ -2641,7 +2666,7 @@ C orbitals accordingly
         Call ChkIfKey()
       Else
 * Default is to use QUNE, unless this is some kind of DFT:
-       If (KeyKSDF) Then
+       If (KeyFUNC) Then
          NQUNE=0
          If (DBG) Write(6,*) ' DFT calculation: QUNE is disabled.'
        Else
@@ -3569,9 +3594,6 @@ C Test read failed. JOBOLD cannot be used.
 *
       Call iCopy(mxGAS*mxSym,ngssh,1,ngssh_Molcas,1)
       Call iCopy(mxGAS*2,igsoccx,1,igsoccx_Molcas,1)
-      Call iCopy(nSym,norb,1,norb_Molcas,1)
-      Call iCopy(nSym,nbas,1,nbas_Molcas,1)
-      Call iCopy(nSym,nish,1,nish_Molcas,1)
       potnuc_Molcas    = potnuc
       thre_Molcas      = thre
       nsym_Molcas      = nsym
@@ -3579,10 +3601,7 @@ C Test read failed. JOBOLD cannot be used.
       ms2_Molcas       = ms2
       ispin_Molcas     = ispin
       lsym_Molcas      = stsym
-      NHOLE1_Molcas    = NHOLE1
-      NELEC3_Molcas    = NELEC3
       itmax_Molcas     = itmax
-      rtoi_Molcas      = rtoi
       nroots_Molcas    = Max(nroots,lRoots)
       ipt2_Molcas      = ipt2
       iprci_molcas     = iprloc(3)
@@ -3602,7 +3621,7 @@ C Test read failed. JOBOLD cannot be used.
         if(.not.doDMRG)then
 #endif
 * Initialize LUCIA and determinant control
-          Call StatusLine('RASSCF:','Initializing Lucia...')
+          Call StatusLine('RASSCF: ','Initializing Lucia...')
           CALL Lucia_Util('Ini')
 * to get number of CSFs for GAS
 * and number of determinants to store

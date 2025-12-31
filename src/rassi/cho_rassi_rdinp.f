@@ -19,13 +19,17 @@
       Use Fock_util_global, only: Deco, Estimate, PseudoChoMOs, Update
       Use Cholesky, only: timings
       use cntrl, only: ALGO, Nscreen, dmpk
+      use rassi_data, only: CHFRACMEM
 
-      Implicit Real*8 (A-H,O-Z)
-#include "rassi.fh"
-#include "print.fh"
-      Character(len=180) KWord, Key, Get_Ln
-      External Get_Ln
+      Implicit None
       Logical  DFonly
+      Integer LuSpool
+#include "print.fh"
+      Character(len=180) KWord, Key
+      Character(len=180), External:: Get_Ln
+      Integer iRout,iPrint,i,iChrct,jrout,last,n
+      Integer, External:: iCLast
+      Real*8 dmpk_dfl
 *
       iRout=1
       iPrint=nPrint(iRout)
@@ -99,7 +103,7 @@ C      If (nToken(KWord).gt.1) call abend()
       if(ALGO.eq.1)then
         Write(6,*) 'Default CD-RASSI algorithm reset to  ',ALGO
         Write(6,*)
-      elseif (ALGO.eq.2) then
+      else if (ALGO.eq.2) then
         Write(6,*) 'Default CD-RASSI algorithm reset to  ',ALGO
         Write(6,*)
       else

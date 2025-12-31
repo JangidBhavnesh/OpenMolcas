@@ -49,16 +49,16 @@ subroutine DiagOrd(PHPCSF,PHPCNF,IPORDCSF,IPORDCNF,MXPDIM,condition,iter,DTOC,IP
 
 use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 use splitcas_data, only: EnerSplit, iDimBlockA, iDimBlockACNF, PerSplit
+use spinfo, only: NCNFTP, NCSFTP, NTYP
 use Constants, only: One
 use Definitions, only: wp, iwp
 
 #include "intent.fh"
 
 implicit none
-integer(kind=iwp), intent(in) :: MXPDIM, IPORDCSF(MXPDIM), iter, IPRODT(*), ICONF(*), IREFSM, NACTOB, NCONF, NEL, NAEL, NBEL, &
-                                 IREOTS(NACTOB)
+integer(kind=iwp), intent(in) :: MXPDIM, iter, IPRODT(*), ICONF(*), IREFSM, NACTOB, NCONF, NEL, NAEL, NBEL, IREOTS(NACTOB)
 real(kind=wp), intent(out) :: PHPCSF(MXPDIM), PHPCNF(NCONF)
-integer(kind=iwp), intent(out) :: IPORDCNF(NCONF)
+integer(kind=iwp), intent(out) :: IPORDCSF(MXPDIM), IPORDCNF(NCONF)
 real(kind=wp), intent(in) :: condition, DTOC(*), ONEBOD(NACTOB,NACTOB), ECORE, TUVX(*), ExFac
 real(kind=wp), intent(_OUT_) :: SCR(*)
 integer(kind=iwp), intent(inout) :: NTEST
@@ -66,7 +66,6 @@ integer(kind=iwp) :: ICSFMN, IICNF, IICSF, IILACT, IILB, ILRI, ILTYP, IMIN, iTmp
                      KLCSFO, KLFREE, KLPHPS, KLSCRS, MXCSFC, NCSFL, NCSFMN, NIRREP, NJCNF, NPCNF, NPCSF
 real(kind=wp) :: Acc, RefSplit, XMAX, XMIN
 real(kind=wp), external :: FNDMNX
-#include "spinfo.fh"
 
 call DIAGORD_INTERNAL(SCR)
 
@@ -105,9 +104,9 @@ subroutine DIAGORD_INTERNAL(SCR)
   do ICNL=1,NCONF
     !write(u6,*) 'IILB',IILB
     call c_f_pointer(c_loc(SCR(KLCONF)),iSCR,[1])
-    call GETCNF_LUCIA(iSCR,ILTYP,ICNL,ICONF,IREFSM,NEL)
+    call GETCNF(iSCR,ILTYP,ICNL,ICONF,IREFSM,NEL)
     nullify(iSCR)
-    !call GETCNF_LUCIA(iSCR,ILTYP,IPCNF(ICNL),ICONF,IREFSM,NEL)
+    !call GETCNF(iSCR,ILTYP,IPCNF(ICNL),ICONF,IREFSM,NEL)
     NCSFL = NCSFTP(ILTYP)
     !write(u6,*) 'NCSFL = ',NCSFL
     !call xflush(u6)
@@ -167,7 +166,7 @@ subroutine DIAGORD_INTERNAL(SCR)
     NPCNF = NPCNF+1
     IPORDCNF(NPCNF) = IMIN
     !write(u6,*)'NPCNF, IPORDCNF(NPCNF) :', NPCNF,IPORDCNF(NPCNF)
-    call ISTVC2(IPORDCSF(NPCSF+1),ICSFMN-1,1,NCSFMN)
+    IPORDCSF(NPCSF+1:NPCSF+NCSFMN) = [(i,i=ICSFMN,ICSFMN+NCSFMN-1)]
     !write(u6,*) 'IPORDCSF(NPCSF) :',(IPORDCSF(NPCSF+i),i=1,NCSFMN)
     !call IVCPRT('IPORDCSF(NPCSF) :',' ', IPORDCSF(NPCSF+1),NCSFMN)
     NPCSF = NPCSF+NCSFMN
@@ -202,8 +201,8 @@ subroutine DIAGORD_INTERNAL(SCR)
     !    DIAVAL = PHPCNF(IPORDCNF(IICNF))
     !    if (abs(DIAVAL-XMIN) > 1.0e-10_wp) exit
     !    NPCNF = NPCNF-1
-    !    call GETCNF_LUCIA(SCR(KLFREE),ITYP,IPCNF(IICNF),ICONF,IREFSM,NEL)
-    !    call GETCNF_LUCIA(PHPCNF(NCONF+1),ITYP,IPCNF(IICNF),ICONF,IREFSM,NEL)
+    !    call GETCNF(SCR(KLFREE),ITYP,IPCNF(IICNF),ICONF,IREFSM,NEL)
+    !    call GETCNF(PHPCNF(NCONF+1),ITYP,IPCNF(IICNF),ICONF,IREFSM,NEL)
     !    NPCSF = NPCSF-NCSFTP(ITYP)
     !  end do
     !end if

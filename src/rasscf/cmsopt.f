@@ -21,9 +21,6 @@
       Implicit None
 
 
-#include "rasdim.fh"
-#include "general.fh"
-#include "SysDef.fh"
 #include "warnings.h"
 
       Real*8,DIMENSION(NACPR2)::TUVX

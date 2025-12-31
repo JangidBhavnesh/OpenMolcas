@@ -48,8 +48,10 @@
      &  nTot, nTot2, nConf
       use gas_data, only : nGssh
       use stdalloc, only: mma_allocate, mma_deallocate
+      use printlevel, only: USUAL
+      use output_ras, only: LF
+      Implicit None
 
-#include "output_ras.fh"
 #include "rasdim.fh"
       integer, intent(in) :: JobIph, iPrlev
 
@@ -92,6 +94,23 @@
      &                    lRoots,nRoots,iRoot,mxRoot,
      &                    nRs1,nRs2,nRs3,
      &                    nHole1,nElec3,iPt2,Weight)
+!     if (DWSCF%do_DW) then
+!       !! recompute the weight and save on JobIph
+!       !! this is not well tested
+!       Call mma_allocate(Ene,mxRoot*mxIter,Label='Ene')
+!       Call Get_dArray('Last energies',Ene,lRoots)
+!       call DWSol_wgt(1,Ene,weight)
+!       Call mma_deallocate(Ene)
+!       iDisk = iToc(1)
+!       Call WR_RASSCF_Info(JobIph,1,iDisk,
+!    &                      nActEl,iSpin,nSym,stSym,
+!    &                      nFro,nIsh,nAsh,nDel,
+!    &                      nBas,mxSym,BName,LENIN8*mxOrb,nConf,
+!    &                      Header,144,Title,4*18*mxTit,PotNucDummy,
+!    &                      lRoots,nRoots,iRoot,mxRoot,
+!    &                      nRs1,nRs2,nRs3,
+!    &                      nHole1,nElec3,iPt2,Weight)
+!     end if
       ntot = sum(nBas(:nSym))
       ntot2 = sum(nBas(:nSym)**2)
 *----------------------------------------------------------------------*
@@ -158,7 +177,11 @@ c     &           CMO, Occ, FDIAG, IndType,VecTyp)
       iDisk=iToc(12)
       DO IRT=1, MIN(MAXORBOUT, LROOTS, 999)
         energy=Ene(IRT)
-        filename = 'RASORB.'//merge(str(IRT), 'x', irt < 999)
+        if (irt < 999) then
+          filename = 'RASORB.'//str(IRT)
+        else
+          filename = 'RASORB.x'
+        end if
         Call dDaFile(JobIph,2,CMO,ntot2,iDisk)
         Call dDaFile(JobIph,2,Occ,ntot,iDisk)
         IF(IPRLEV.GE.USUAL) then
@@ -186,7 +209,11 @@ c     &           CMO, Occ, FDIAG, IndType,VecTyp)
       Call mma_allocate(EDum,NTot,Label='EDum')
       EDum(:)=0.0D0
       DO IRT=1,MIN(MAXORBOUT,LROOTS,999)
-        filename = 'SPDORB.'//merge(str(IRT), 'x', irt < 999)
+        if (irt < 999) then
+          filename = 'SPDORB.'//str(IRT)
+        else
+          filename = 'SPDORB.x'
+        end if
         Call dDaFile(JobIph,2,CMO,ntot2,iDisk)
         Call dDaFile(JobIph,2,Occ,ntot,iDisk)
         IF (IPRLEV.GE.USUAL) then

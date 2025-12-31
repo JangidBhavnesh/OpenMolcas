@@ -11,7 +11,7 @@
 
 subroutine NEMO_Opt1()
 
-use Basis_Info, only: dbsc, nBas, nCnttp, Shells
+use Basis_Info, only: dbsc, icent, lmag, lnang, nAngr, nBas, nBasisr, nCnttp, nPrimr, nrBas, nrSym, rCof, rExp, Shells
 use Symmetry_Info, only: nIrrep
 use OneDat, only: sOpSiz
 use stdalloc, only: mma_allocate, mma_deallocate
@@ -20,7 +20,6 @@ use Definitions, only: wp, iwp, u6
 
 implicit none
 #include "Molcas.fh"
-#include "rinfo.fh"
 #include "print.fh"
 integer(kind=iwp) :: nBas_Prim(0:7), nBas_cont(0:7), lOper(3), ip(3), iSml(3), Length(1), n_int(1), i, iAngr, iBas, iCmp, icnt, &
                      iCnttp, iComp, idbg, iExp, iip, iMltPl, iOpt, iPrint, iRC, iRout, iSmLbl, jExp, kAng, kC, kCof, kCofi, kCofj, &
@@ -176,7 +175,7 @@ do iComp=1,nComp
 end do
 
 call mma_allocate(P_Matrix,nLength_Tot,label='P_Matrix')
-call FZero(P_Matrix,nLength_Tot)
+P_Matrix(:) = Zero
 
 do iComp=1,nComp
   iCmp = iComp

@@ -45,7 +45,7 @@ use Definitions, only: u6
 
 implicit none
 integer(kind=iwp), intent(in) :: iOffZ, iOffE, nZeta, nEta, mZeta, mEta, iphX1, iphY1, iphZ1, iphX2, iphY2, iphZ2
-integer, intent(out) :: lZeta, lEta, IndZet(nZeta), IndEta(nEta)
+integer(kind=iwp), intent(out) :: lZeta, lEta, IndZet(nZeta), IndEta(nEta)
 type(k2_type), intent(in) :: k2Data1, k2Data2
 real(kind=wp), intent(out) :: Zeta(mZeta), ZInv(mZeta), P(nZeta,3), KappAB(mZeta), Eta(mEta), EInv(mEta), Q(nEta,3), KappCD(mEta)
 real(kind=wp), intent(in) :: Dij(nZeta), Dkl(nEta), CutDInt, CutInt, vij, vkl, vik, vil, vjk, vjl
@@ -54,8 +54,8 @@ integer(kind=iwp) :: iEta, iZeta, jEta, jZeta
 real(kind=wp) :: aaaa, abMax, cdMax, Cut, DMax, ppaa, test, vMax
 logical(kind=iwp) :: Skip
 
-abMax = k2Data1%abMax
-cdMax = k2Data2%abMax
+abMax = k2Data1%abConMax
+cdMax = k2Data2%abConMax
 
 Skip = .false.
 if (.not. Prescreen_On_Int_Only) then

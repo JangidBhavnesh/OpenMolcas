@@ -44,6 +44,7 @@ use Fock_util_interface, only: cho_lr_MOs
 use Fock_util_global, only: Deco, Estimate, Fake_CMO2, PseudoChoMOs, Update
 use Data_Structures, only: DSBA_Type, NDSBA_Type, SBA_Type, twxy_Type
 use Cholesky_Structures, only: Allocate_DT, Deallocate_DT, L_Full_Type, Lab_Type
+use rassi_data, only: NASH, NISH
 #ifdef _MOLCAS_MPP_
 use Para_Info, only: Is_Real_Par, nProcs
 #endif
@@ -59,7 +60,6 @@ type(DSBA_Type), intent(inout) :: MSQ(2), FLT(1), FSQ
 integer(kind=iwp), intent(in) :: nTUVX, nScreen
 real(kind=wp), intent(_OUT_) :: TUVX(nTUVX)
 real(kind=wp), intent(in) :: dmpk
-#include "rassi.fh"
 integer(kind=iwp) :: ia, iab, iabg, iag, iaSh, iaSkip, ib, iBatch, ibcount, ibg, ibs, ibSh, ibSkip, iCase, iE, ik, iLoc, iml, Inc, &
                      ioffa, iOffAB, ioffb, iOffShb, iOK, irc, ired1, IREDC, iS, ish, iShp, iSwap, ISYM, iSyma, iSymb, iSymv, iTmp, &
                      IVEC2, iVrs, jaSkip, jden, jK, jK_a, jml, jmlmax, JNUM, JRED, JRED1, JRED2, jrs, jSym, jvc, JVEC, k, kDen, &
@@ -492,7 +492,7 @@ do jSym=1,nSym
 
         if (Estimate) then
 
-          call Fzero(DIAG(1+iiBstR(jSym,1)),NNBSTR(jSym,1))
+          DIAG(iiBstR(jSym,1)+1:iiBstR(jSym,1)+NNBSTR(jSym,1)) = Zero
 
           do krs=1,nRS
 
@@ -1108,9 +1108,10 @@ do jSym=1,nSym
 
 #   ifdef _MOLCAS_MPP_
     if ((nProcs > 1) .and. Update .and. DoScreen .and. Is_Real_Par()) then
-      call GaDsum(DiagJ,nnBSTR(JSYM,1))
-      call Daxpy_(nnBSTR(JSYM,1),-One,DiagJ,1,DIAG(1+iiBstR(JSYM,1)),1)
-      call Fzero(DiagJ,nnBSTR(JSYM,1))
+      n1 = nnBSTR(JSYM,1)
+      call GaDsum(DiagJ,n1)
+      DIAG(iiBstR(JSYM,1)+1:iiBstR(JSYM,1)+n1) = DIAG(iiBstR(JSYM,1)+1:iiBstR(JSYM,1)+n1)-DiagJ(1:n1)
+      DiagJ(1:n1) = Zero
     end if
     ! Need to activate the screening to setup the contributing shell
     ! indices the first time the loop is entered .OR. whenever other nodes
