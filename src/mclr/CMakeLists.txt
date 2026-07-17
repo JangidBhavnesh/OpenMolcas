@@ -57,7 +57,6 @@ set (sources
      ci_kap.F90
      ci_reconstruct.F90
      cisize.F90
-     clebsch_gordan_mclr.F90
      clsfls_mclr.F90
      cmp2cn.F90
      cmsrdmat.F90
@@ -152,7 +151,6 @@ set (sources
      gtsttp_2.F90
      gtsttps_1.F90
      gtsttps_2.F90
-     guganew.F90
      h0csf.F90
      h0.F90
      h0mat_mclr.F90
@@ -179,7 +177,6 @@ set (sources
      kap_ci.F90
      make_conn.F90
      mclr_banner.F90
-     mclr_data.F90
      mclr.F90
      mclr_procedures.F90
      memstr.F90
@@ -255,7 +252,6 @@ set (sources
      read2_ns.F90
      read_dmrg_parameter_for_mclr.F90
      reload.F90
-     reord.F90
      rhs_cms.F90
      rhs_cms_nac.F90
      rhs.F90
@@ -281,8 +277,9 @@ set (sources
      sdcmrf_mclr_2.F90
      sdcmrf_pre.F90
      setlab.F90
-     set_nbmx.F90
      setup_mclr.F90
+     sg_setup_mclr.F90
+     sg2symg.F90
      sigmavec.F90
      skickj_mclr.F90
      solveforrhs.F90
@@ -293,7 +290,6 @@ set (sources
      start_mclr.F90
      stpert.F90
      strinf.F90
-     str_info.F90
      strtyp.F90
      sxtyp.F90
      tcmo.F90

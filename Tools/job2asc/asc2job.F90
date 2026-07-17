@@ -14,11 +14,12 @@ program ASC2JOB
 use rasscf_global, only: BName, Header, IADR15, iPT2, iRoot, lRoots, NACPAR, NACPR2, NORBT, nRoots, NTOT3, PotNuc, Title, Weight
 use general_data, only: ispin, jobiph, nactel, nash, nbas, nconf, ndel, ndel, nelec3, nfro, nhole1, nish, norb, nrs1, nrs2, nrs3, &
                         nsym, ntot, ntot2
+use Molcas, only: LenIn, MxOrb, MxRoot, MxSym
+use RASDim, only: MxIter, MxTit
 use stdalloc, only: mma_allocate, mma_deallocate
 use Definitions, only: wp, iwp
 
 implicit none
-#include "rasdim.fh"
 integer(kind=iwp) :: FMTIPH, I, IAD15, ISYM, LSYM, NASHT, NFOCK, nHeader, nName, nTitle
 logical(kind=iwp) :: Found
 real(kind=wp), allocatable :: ADR1(:), ADR2(:), ADR(:)
@@ -45,7 +46,7 @@ read(FMTIPH,'(15I10)') IADR15(1:30)
 IAD15 = 0
 call IDAFILE(JOBIPH,1,IADR15,30,IAD15)
 
-nName = LenIn8*mxOrb
+nName = (LenIn+8)*mxOrb
 nHeader = 144
 nTitle = 4*18*mxTit
 

@@ -9,7 +9,7 @@
 ! LICENSE or in <http://www.gnu.org/licenses/>.                        *
 !***********************************************************************
 
-subroutine RdInp_MCLR()
+subroutine RdInp_MCLR(iPL)
 !***********************************************************************
 !                                                                      *
 !     Locate input stream and read commands                            *
@@ -28,12 +28,14 @@ use input_mclr, only: CasInt, Debug, double, Eps, iBreak, IsPop, kPrint, lCalc, 
                       nsRot, nSym, ntPert, nUserPT, Omega, Page, RASSI, SpinPol, StepType, TimeDep, TitleIn, TwoStep, UserP, UserT
 use PCM_grad, only: RFPERT
 use cgs_mod, only: CGS
+use Molcas, only: MxAtom
+use RASDim, only: MxTit
 use stdalloc, only: mma_allocate, mma_deallocate
 use Constants, only: Zero
 use Definitions, only: wp, iwp, u5, u6
 
 implicit none
-#include "rasdim.fh"
+integer(kind=iwp), intent(in):: iPL
 integer(kind=iwp) :: I, ICOM, ICOMP, ID, iDum(1), iMass, IOPT, IP, IPP, IRC, IRRFNC, istatus, ISYLBL, ISYM, ITIT, J, JCOM, nDiff
 logical(kind=iwp) :: DoRys, Epsilon_Undef, Skip
 character(len=72) :: Line
@@ -66,6 +68,7 @@ override = .false.
 if (debug) write(u6,*) 'Got Basis_Info and Center_Info'
 lRoots = -1
 kprint = 0
+if (iPL >= 2) kPrint = 1
 ngp = .false.
 NoFile = .false.
 mTit = 0
@@ -477,7 +480,7 @@ do i=1,3
   write(Swlbl(id),'(a,i2)') 'MLTPL ',1
   iRc = -1
   iOpt = ibset(0,sOpSiz)
-  call iRdOne(iRc,iOpt,swlbl(id),dspvec(id),idum,iSyLbl)
+  call iRdOne(iRc,iOpt,swlbl(id),DspVec(id),idum,iSyLbl)
 end do
 
 if (Timedep) then

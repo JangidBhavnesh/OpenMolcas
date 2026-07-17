@@ -29,19 +29,19 @@ subroutine RdJobIph(CIVec)
 use Index_Functions, only: nTri_Elem
 use Symmetry_Info, only: Mul
 use MckDat, only: sNew
-use gugx, only: CIS, EXS, SGS
 use MCLR_Data, only: CMO, FnJob, FnMck, G1t, G2t, IRLXROOT, ISNAC, ISTATE, LuJob, LuMck, nA, NACSTATES, nNA, NSSA, OVERRIDE, SA
 use input_mclr, only: Debug, ERASSCF, Headerjp, iMCPD, iMSPD, iPT2, iRoot, iSpin, iTOC, iTocIph, lRoots, McKinley, nActEl, nAsh, &
-                      nBas, nCOnf, nCSF, nDel, nElec3, nFro, nHole1, nIsh, nOrb, nRoots, nRS1, nRS2, nRS3, nSym, ntAsh, ntASqr, &
-                      ntATri, ntBas, ntBSqr, ntBTri, ntIsh, ntISqr, ntITri, PT2, State_Sym, TitleJP, Weight
+                      nBas, nCOnf, nDel, nElec3, nFro, nHole1, nIsh, nOrb, nRoots, nRS1, nRS2, nRS3, nSym, ntAsh, ntASqr, ntATri, &
+                      ntBas, ntBSqr, ntBTri, ntIsh, ntISqr, ntITri, PT2, State_Sym, TitleJP, Weight
 use dmrginfo, only: DoDMRG, LRRAS2, RGRAS2
+use Molcas, only: LenIn, MxOrb, MxRoot, MxSym
+use RASDim, only: MxIter, MxTit
 use stdalloc, only: mma_allocate, mma_deallocate
 use Constants, only: Zero
 use Definitions, only: wp, iwp, u6
 
 implicit none
 real(kind=wp), allocatable, intent(out) :: CIVec(:,:)
-#include "rasdim.fh"
 integer(kind=iwp) :: i, iDisk, iDummer, iGo, iMode, iOpt, iRC, iS, iSym, Iter, j, jS, k, kRoots, kS, Length, lS, nAct, nAct2, &
                      nAct4, nG1, nG2
 real(kind=wp) :: PotNuc0, rdum(1), Temp
@@ -73,12 +73,12 @@ call iDaFile(LuJob,2,iToc,iTOCIPH,iDisk)
 !----------------------------------------------------------------------*
 !     Read the the system description                                  *
 !----------------------------------------------------------------------*
-call mma_allocate(TempTxt,LenIn8*MxOrb,Label='TempTxt')
+call mma_allocate(TempTxt,(LenIn+8)*MxOrb,Label='TempTxt')
 iDisk = iToc(1)
 
 !write(u6,*) 'if dmrg, it should be something else'
-call WR_RASSCF_Info(LuJob,2,iDisk,nActEl,iSpin,nSym,State_sym,nFro,nIsh,nAsh,nDel,nBas,MxSym,TempTxt,LenIn8*mxorb,nConf,HeaderJP, &
-                    144,TitleJP,4*18*mxTit,PotNuc0,lRoots,nRoots,iRoot,mxRoot,nRs1,nRs2,nRs3,nHole1,nElec3,iPt2,Weight)
+call WR_RASSCF_Info(LuJob,2,iDisk,nActEl,iSpin,nSym,State_sym,nFro,nIsh,nAsh,nDel,nBas,MxSym,TempTxt,(LenIn+8)*mxorb,nConf, &
+                    HeaderJP,144,TitleJP,4*18*mxTit,PotNuc0,lRoots,nRoots,iRoot,mxRoot,nRs1,nRs2,nRs3,nHole1,nElec3,iPt2,Weight)
 
 if (doDMRG) then ! yma
   nash(:) = LRras2(:)
@@ -132,14 +132,7 @@ end do
 if (doDMRG) then  ! yma
   imode = -99
   ! generate the Nr. of csfs in each sym
-  call GugaNew(nSym,iSpin,nActEl,nHole1,nElec3,nRs1,nRs2,nRs3,SGS,CIS,EXS,rdum,imode,State_Sym,State_Sym)
-  NCSF(1:nSym) = CIS%NCSF(1:nSym)
-  NCONF = CIS%NCSF(State_Sym)
-  call mkGuga_Free(SGS,CIS,EXS)
-
-  !do isym=1,8
-  !  write(u6,*) 'isym_ncsf in rdjobiph ',ncsf(isym)
-  !end do
+  call SG2SymG(rdum,1,imode,State_sym)
 end if
 
 !----------------------------------------------------------------------*
@@ -194,7 +187,7 @@ else if ((irlxroot == 1) .and. (.not. (McKinley .or. PT2 .or. iMCPD))) then
   write(u6,*) 'W A R N I N G !'
   write(u6,*)
   write(u6,*) 'Redundant rlxroot input in RASSCF!'
-  write(u6,*) 'I''ll sign off here without a clean termination!'
+  write(u6,*) "I'll sign off here without a clean termination!"
   write(u6,*) 'However, I have to fix the epilogue file.'
   write(u6,*)
   irc = -1

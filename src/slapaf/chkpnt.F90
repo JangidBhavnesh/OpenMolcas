@@ -19,6 +19,7 @@ use mh5, only: mh5_close_attr, mh5_close_dset, mh5_close_file, mh5_create_attr_i
                mh5_open_dset, mh5_open_file_rw, mh5_put_attr, mh5_put_dset, mh5_resize_dset
 use Definitions, only: wp
 #endif
+use Molcas, only: LenIn
 use Definitions, only: iwp
 
 implicit none
@@ -45,7 +46,7 @@ subroutine Chkpnt_open()
 
   Iter_all = Iter
   create = .true.
-  call GetEnvF('EMIL_InLoop',level)
+  call get_environment_variable('EMIL_InLoop',level)
   if ((level == '0') .or. (level == '1')) level = ''
   filename = basename//trim(level)
 
@@ -88,7 +89,6 @@ subroutine Chkpnt_init()
   use Index_Functions, only: nTri_Elem
   use Slapaf_Info, only: AtomLbl, Coor, dMass, dMEPStep, iCoSet, MEP, nDimBC, nStab, rMEP, Smmtrc
   use stdalloc, only: mma_allocate, mma_deallocate
-# include "Molcas.fh"
   character :: lIrrep(24)
   integer(kind=iwp) :: dsetid, i, j, k, mAtom
   integer(kind=iwp), allocatable :: desym(:,:), symdof(:,:)

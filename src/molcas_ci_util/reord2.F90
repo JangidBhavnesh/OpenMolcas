@@ -53,10 +53,11 @@ subroutine Reord2(NORB,NEL,IREFSM,IMODE,ICONF,ISPIN,CIOLD,CINEW,KCNF)
 !                                                                      *
 !***********************************************************************
 
-use gugx, only: CIS, EXS, SGS
+use sguga, only: CIS, EXS, SGS
 use output_ras, only: IPRLOC
 use spinfo, only: MINOP, NCNFTP, NCSFTP, NTYP
-use printlevel, only: DEBUG
+use PrintLevel, only: DEBUG
+use Molcas, only: MxAct
 use Definitions, only: wp, iwp, u6
 
 #include "intent.fh"
@@ -66,7 +67,6 @@ integer(kind=iwp), intent(in) :: NORB, NEL, IREFSM, IMODE, ICONF(*), ISPIN(*)
 real(kind=wp), intent(in) :: CIOLD(*)
 real(kind=wp), intent(_OUT_) :: CINEW(*)
 integer(kind=iwp), intent(out) :: KCNF(NEL)
-#include "rasdim.fh"
 integer(kind=iwp) :: i, IC, ICL, ICNBS, ICNBS0, ICSBAS, ICSFJP, IIBCL, IIBOP, IICSF, IOPEN, IP, IPBAS, IPRLEV, ISG, ITYP, &
                      IWALK(mxAct), JOCC, KOCC, KORB, LPRINT
 integer(kind=iwp), external :: IPHASE, ISGNUM

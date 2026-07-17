@@ -17,6 +17,7 @@ subroutine Fetch_QMMM(CastMM,nCastMM)
 use, intrinsic :: iso_c_binding, only: c_char, c_int, c_loc, c_ptr
 use espf_global, only: MMI, MMO, QM, TPRDefName
 use Isotopes, only: PTab
+use Molcas, only: LenIn
 use stdalloc, only: mma_allocate, mma_deallocate
 use Constants, only: Zero, One, Ten, Angstrom
 use Definitions, only: wp, iwp
@@ -24,7 +25,6 @@ use Definitions, only: wp, iwp
 implicit none
 integer(kind=iwp), intent(in) :: nCastMM
 integer(kind=iwp), intent(in) :: CastMM(nCastMM)
-#include "LenIn.fh"
 integer(kind=iwp) :: iAtGMX, iAtNmbGMX, iAtOut, iCastMM, iFirst, iGrpGMX, iLast, iOk, LuXYZ, nAtGMX, nAtIn, nAtOut
 logical(kind=iwp) :: Exists
 character(len=LenIn) :: Symbol

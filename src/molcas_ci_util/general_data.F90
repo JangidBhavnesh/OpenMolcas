@@ -30,12 +30,11 @@ module general_data
 ! LUDAVID    : Intermediate results of the diagonalization
 !              (binary, temporary)
 
+use Molcas, only: MxSym
 use Definitions, only: wp, iwp
 
 implicit none
 private
-
-#include "Molcas.fh"
 
 integer(kind=iwp), parameter :: MAXALTER = 16
 integer(kind=iwp) :: INVEC, ISPIN, ITERFILE, JOBIPH, JOBOLD, LUDAVID, LUINTA, LUINTM, LUONEL, LUQUNE, LUStartOrb, &

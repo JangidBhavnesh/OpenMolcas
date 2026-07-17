@@ -20,10 +20,9 @@ subroutine WfCtl_SA(iKapDisp,iSigDisp,iCIDisp,iCIsigDisp,iRHSDisp,converged,iPL)
 
 use Symmetry_Info, only: Mul
 use ipPage, only: ipclose, ipget, ipin, ipnout, ipout, opout, W
-use gugx, only: CIS, EXS, SGS
 use MCLR_Data, only: ipCI, ipDia, IRLXROOT, ISNAC, LuQDat, LuTemp, NACSTATES, nConf1, nDens, nDensC, XISPSM
-use input_mclr, only: Debug, Eps, Fail, iAddressQDat, iBreak, iMethod, iSpin, kPrint, lSave, nActEl, nAsh, nConf, nCSF, nDisp, &
-                      nElec3, nHole1, nIter, NROOTS, nRS1, nRS2, nRS3, nSym, PT2, State_Sym, STEPTYPE, TWOSTEP
+use input_mclr, only: Debug, Eps, Fail, iAddressQDat, iBreak, iMethod, kPrint, lSave, nAsh, nCSF, nDisp, nIter, NROOTS, nRS2, PT2, &
+                      State_Sym, STEPTYPE, TWOSTEP
 use PCM_grad, only: def_solv, do_RF, iStpPCM, PCM_grad_CLag, PCM_grad_PT2
 use ISRotation, only: DMInvISR, InvSCF, ISR, ISR_final, ISR_init, ISR_projection, ISR_RHS
 use cgs_mod, only: CGS, CGS_init, CGS_final
@@ -36,8 +35,8 @@ implicit none
 integer(kind=iwp), intent(out) :: iKapDisp(nDisp), isigDisp(nDisp), iCIDisp(nDisp), iCIsigDisp(nDisp), iRHSDisp(nDisp)
 logical(kind=iwp), intent(out) :: converged(8)
 integer(kind=iwp), intent(in) :: iPL
-integer(kind=iwp) :: iDis, iDisp, iLen, ipCID, ipCIT, ipPre2, ipS1, ipS2, ipST, iR, iSym, Iter, jSpin, Left, lLine, lPaper, Lu_50, &
-                     nConf3, niPre2, nPre2
+integer(kind=iwp) :: iDis, iDisp, iLen, iMode, ipCID, ipCIT, ipPre2, ipS1, ipS2, ipST, iR, iSym, Iter, jSpin, Left, lLine, lPaper, &
+                     Lu_50, nConf3, niPre2, nPre2
 real(kind=wp) :: Delta, Delta0, DeltaC, DeltaK, R1, R2, rAlpha, rAlphaC, rAlphaK, rBeta, ReCo, Res, rEsci, rEsk, rEss
 logical(kind=iwp) :: CI, cnvrgd, lPrint
 character(len=8) :: Fmt2
@@ -63,7 +62,7 @@ iDis = 0
 fail = .false.
 Converged(:) = .true.
 !MGD I think this is nice when printed...
-lprint = .true.
+lprint = btest(kprint,0)
 reco = -One
 Lu_50 = 50
 if (lSAVE) call DANAME(Lu_50,'RESIDUALS')
@@ -71,7 +70,6 @@ if (lSAVE) then
   write(u6,*) 'WfCtl_SA: SAVE option not implemented'
   call Abend()
 end if
-if (btest(kprint,1)) lprint = .true.
 isym = 1
 nconf1 = ncsf(State_Sym)
 !! iStpPCM has been set somewhere; just a reminder
@@ -195,10 +193,8 @@ else
       call mma_allocate(wrk,nConf1,Label='wrk')
       do iR=1,nRoots
         wrk(:) = W(ipST)%A(nConf1*(iR-1)+1:nConf1*iR)
-        call GugaNew(nSym,iSpin,nActEl,nHole1,nElec3,nRs1,nRs2,nRs3,SGS,CIS,EXS,wrk,1,State_Sym,State_Sym)
-        NCSF(1:nSym) = CIS%NCSF(1:nSym)
-        NCONF = CIS%NCSF(State_Sym)
-        call mkGuga_Free(SGS,CIS,EXS)
+        iMode = 1
+        call SG2SymG(wrk,nConf1,iMode,State_Sym)
         W(ipST)%A(nConf1*(iR-1)+1:nConf1*iR) = wrk(:)
       end do
       call mma_deallocate(wrk)
@@ -303,7 +299,7 @@ else
     r2 = ddot_(nDensC,Kappa,1,Kappa,1)
     if (PT2) R2 = R2+DDot_(nConf1*nRoots,W(ipS2)%A,1,W(ipS2)%A,1)
     if (debug) write(u6,*) 'In that case I think that r2 should be:',r2
-    if (r2 > r1) write(u6,*) 'Warning perturbation number ',idisp,' might diverge'
+    if (lprint .and. (r2 > r1)) write(u6,*) 'Warning perturbation number ',idisp,' might diverge'
 
     dKappa(:) = Kappa(:)
 

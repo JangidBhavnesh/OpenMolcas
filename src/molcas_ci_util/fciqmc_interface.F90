@@ -14,7 +14,7 @@
 module fciqmc_interface
 
 #ifdef _MOLCAS_MPP_
-use mpi, only: MPI_COMM_WORLD, MPI_LOGICAL
+use MPI_Wrapper, only: MPI_COMM_WORLD, MPI_LOGICAL
 use Para_Info, only: Is_Real_Par
 use Definitions, only: MPIInt
 #endif
@@ -22,7 +22,7 @@ use Definitions, only: wp, iwp, byte
 #ifdef _HDF5_
 use mh5, only: mh5_close_file, mh5_close_group, mh5_fetch_dset, mh5_get_dset_dims, mh5_open_dset, mh5_open_file_r, mh5_open_group
 use Para_Info, only: MyRank
-use caspt2_global, only: jstate, mstate, nActel, nG3
+use caspt2_module, only: jstate, mstate, nActel, nG3
 use linalg_mod, only: verify_
 use fortran_strings, only: str
 use filesystem, only: getcwd_

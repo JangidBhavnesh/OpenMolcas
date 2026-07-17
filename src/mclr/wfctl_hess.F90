@@ -23,11 +23,13 @@ subroutine WfCtl_Hess(iKapDisp,iSigDisp,iCIDisp,iCIsigDisp,iRHSDisp,iRHSCIDISP,c
 !                                                                      *
 !***********************************************************************
 
+use Task_Manager, only: Free_Tsk, Init_Tsk, Rsv_Tsk
 use Symmetry_Info, only: Mul
 use ipPage, only: ipclose, ipget, ipin, ipin1, ipnout, ipout, opout, W
 use Para_Info, only: myRank, nProcs
 #ifdef _MOLCAS_MPP_
 use Para_Info, only: Is_Real_Par
+use GA_Wrapper, only: GA_Create, MT_DBL
 #endif
 use Spool, only: LuWr
 use MCLR_Data, only: CMO, FIMO, Int2, ipCI, ipDia, lDisp, LuTemp, n1Dens, n2Dens, nConf1, nDens, nDensC, XISPSM
@@ -55,8 +57,6 @@ character(len=132) :: Line
 character(len=72) :: SLine
 character(len=8) :: Fmt2
 #ifdef _MOLCAS_MPP_
-#include "global.fh"
-#include "mafdecls.fh"
 integer(kind=iwp) :: iglfail
 real(kind=wp) :: dfail
 #endif
@@ -66,7 +66,6 @@ real(kind=wp), allocatable :: Dens(:), dKappa(:), Kappa(:), Pens(:), rmoaa(:), S
 integer(kind=iwp), parameter :: iTimeCC = 1, iTimeKK = 2, iTimeKC = 3, iTimeCK = 4
 integer(kind=iwp), external :: IsFreeUnit, niPre, nPre
 real(kind=wp), external :: DDot_
-logical(kind=iwp), external :: Rsv_Tsk
 
 !----------------------------------------------------------------------*
 !     Start                                                            *
@@ -92,7 +91,6 @@ iDis = 0
 
 fail = .false.
 Converged(:) = .true.
-lprint = .false.
 !if (lSAVE) call DANAME(50,'RESIDUALS')
 if (lSAVE) then
   write(LuWr,*) 'WfCtl: SAVE option not implemented'
@@ -103,7 +101,7 @@ end if
 !                                                                      *
 ! Start loop over the symmetry of the perturbations
 
-if (btest(kprint,1)) lprint = .true.
+lprint = btest(kprint,0)
 #ifdef _DEBUGPRINT_
 lprint = .true.
 #endif

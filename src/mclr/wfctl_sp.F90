@@ -51,7 +51,7 @@ idis = 0
 lprint = .false.
 nconf1 = 0
 
-if (btest(kprint,1)) lprint = .true.
+lprint = btest(kprint,0)
 if (iMethod == 2) call InCSFSD(State_Sym,State_sym)
 
 nconf1 = ncsf(State_Sym)
@@ -82,6 +82,8 @@ if (imethod > 0) then
 else
   call Untested('WfCtl_sp')
   ! These are uninitialized!
+  ips1 = -1
+  ips2 = -1
   ipst = -1
   ipcid = -1
 end if
@@ -126,7 +128,7 @@ if (lprint) write(u6,*) '       Iteration         Delta     Res(kappa) Res(CI)'
 iLen = nDensC
 iRHSDisp(iDisp) = iDis
 call Compress(Temp4,Sigma,1)
-Sigma(:) = -sqrt(OneHalf)*dble(ms2p)*Sigma(:)
+Sigma(:) = -sqrt(OneHalf)*real(ms2p,kind=wp)*Sigma(:)
 call UnCompress(Sigma,Temp4,1)
 call dDaFile(LuTemp,1,Sigma,iLen,iDis)
 if (iMethod == 2) then

@@ -103,9 +103,9 @@ Alexander Gaenko
 Laura Gagliardi  
 Walter Gautschi  
 Giovanni Ghigo  
-Coen de Graaf  
 Joseph Golab  
 Gene H. Golub  
+Coen de Graaf  
 Sergey Gusarov  
 Daniel Hagberg  
 Jun-ya Hasegawa  
@@ -124,6 +124,7 @@ Stefan Knecht
 Vladislav Kochetov  
 Jesper Wisborg Krogh  
 Teodoro Laino  
+Dong Q. Le  
 Susi Lehtola  
 Giovanni Li Manni  
 Roland Lindh  
@@ -173,8 +174,8 @@ Martin Schütz
 Thais Scott  
 Luis Seijo  
 Luis Serrano-Andrés  
-Kamal Sharkas  
 Grigory A. Shamov  
+Kamal Sharkas  
 Prachi Sharma  
 Per E. M. Siegbahn  
 Pär Söderhjelm  
@@ -184,6 +185,7 @@ Hermann Stoll
 Tjerk P. Straatsma  
 Bingbing Suo  
 Ben Swerts  
+Kalman Szenes  
 Akio Takatsuka  
 Bruno N. C. Tenorio  
 Thorstein Thorsteinsson  
@@ -205,6 +207,7 @@ Małgorzata Wierzbowska
 Alexander Wolf  
 Sebastian Wouters  
 Felipe Zapata  
+Lila Zapp  
 Alexander Zech  
 Yan Zhao  
 Chen Zhou  
