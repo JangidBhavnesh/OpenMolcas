@@ -620,8 +620,12 @@ subroutine get_prop(prop_lab,idx,comps,iAtom)
 
   do iPROP = 1,NPROP
     if (PNAME(iPROP) == lab_full) then
-      iC = findloc(comps, ICOMP(iPROP),dim=1)
-      idx(iAtom,iC) = iPROP
+      do iC = 1, size(comps)
+        if (comps(iC) == ICOMP(iPROP)) then
+          idx(iAtom,iC) = iPROP
+          exit
+        end if
+      end do
     end if
   end do
 
