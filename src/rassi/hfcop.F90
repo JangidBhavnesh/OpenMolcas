@@ -610,7 +610,7 @@ subroutine get_prop(prop_lab,idx,comps,iAtom)
   character(len=5), intent(in) :: prop_lab
   integer(kind=iwp), intent(out) :: idx(:,:)
   integer(kind=iwp), intent(in), optional :: iAtom, comps(:)
-  integer(kind=iwp) :: iC, iProp
+  integer(kind=iwp) :: iC, iProp, findloc
   character(len=3) :: temp_lab
   character(len=8) :: lab_full
 
