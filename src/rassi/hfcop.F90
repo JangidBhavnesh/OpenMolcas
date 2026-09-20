@@ -628,8 +628,7 @@ end subroutine
 
 subroutine get_all_prop()
   !PURPOSE: Generate a specific property for iAtom with comps
-  integer(kind=iwp) :: iPROP, iC
-  integer(kind=iwp) :: iAtom
+  integer(kind=iwp) :: iPROP, iAtom
 
   call mma_allocate(MAG_idx,NAtoms, 6)
   call mma_allocate(PSO_idx,NAtoms, 3)
@@ -1344,7 +1343,7 @@ subroutine calc_h_PSO(iAtom,PROP)
 
   integer(kind=iwp), intent(in) :: iAtom
   real(kind=wp), intent(in) :: PROP(NSTATE,NSTATE,NPROP)
-  integer(kind=iwp) :: u, ISS, JSS, ISTATE, JSTATE, MPLET1, MSPROJ1, MPLET2, MSPROJ2
+  integer(kind=iwp) :: ISS, JSS, ISTATE, JSTATE, MPLET1, MSPROJ1, MPLET2, MSPROJ2
   real(kind=wp), allocatable :: Im_h_PSO(:,:,:)
 
   call mma_allocate(Im_h_PSO,3,NSS,NSS,Label='Im_h_PSO')
