@@ -517,21 +517,22 @@ subroutine proc_spin_data()
   use_seward_mass = .false.
   ! Setting DEFAULT case based on user input
   if (HypF_rms_Req) then
-    if (.not.(AutoSel_GFac .or. NMass_set .or. NSpin_set .or. GNuc_set)) use_seward_mass = .true.
+    if (.not.(NMass_set .or. NSpin_set .or. GNuc_set)) use_seward_mass = .true.
   else if (allocated(Atens_Req)) then
     if (.not.AutoSel_GFac) then
     ! Use SEWARD mass as default if keyword DAUG is present
-      use_seward_mass= .true.
+      use_seward_mass = .true.
     else if (.not.(NMass_set .or. NSpin_set .or. GNuc_set)) then
       AutoSel_GFac = .true.
     end if
   end if
 
+  ! Two defaults have higher priority. They will be overridden by NMASS, NSPIN or GNUC
+  if (AutoSel_GFac) icase = 5
   if (use_seward_mass) icase = 1
   if (NMass_set) icase = 2
   if (NSpin_set) icase = 3
   if (GNuc_set) icase = 4
-  if (AutoSel_GFac) icase = 5
 
   ! HYPOTHEICAL ISOTOPE-------------------------------------------------------------
   if (.not. allocated(HypoIso)) then
