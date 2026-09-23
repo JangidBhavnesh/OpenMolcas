@@ -110,7 +110,7 @@ subroutine Hyperfine_Oper(PROP,USOR,USOI,JBNUM)
   end do
 
   ! Printing final results------------------------------
-  if (HypF_rms_Req) call save_h_rms()
+  if (HypF_rms_Req) call save_and_print_h_rms()
   if (allocated(Atens_Req)) call print_EPR_summary()
   if (allocated(pNMR_req)) call print_pNMR_summary()
 
@@ -1396,29 +1396,54 @@ subroutine save_h_hfc(h_HFC,iAtom,iContr)
   end do
 end subroutine
 
-subroutine save_h_rms()
-
-  integer(kind=iwp) :: ISS, istatus, JSTA, LU
+subroutine save_and_print_h_rms()
   logical(kind=iwp) :: is_error
   integer(kind=iwp), external :: IsFreeUnit
+  integer(kind=iwp) :: ISS, JSS, MPLET1, MPLET2, MSPROJ1, MSPROJ2, ISTATE, JSTATE, istatus, LU, io_units(2),i, IO
+  real(kind=wp) :: S1, SM1, S2, SM2
 
+  ! SAVE TO h_HFC_RMS.txt file
 # ifdef _HDF5_
   call mh5_put_dset(wfn_h_hfc_rms,h_hfc_rms)
 # endif
 
   Lu = IsFreeUnit(88)
   istatus = 100
-  call molcas_open_ext2(Lu,'h_RMS.txt','SEQUENTIAL','FORMATTED',istatus,.false.,1,'REPLACE',is_error)
-  write(Lu,*) 'NSS= ',NSS
-  write(Lu,*) '#NROW NCOL REAL'
-  do JSTA=1,NSS
-    do ISS=1,NSS
-      write(Lu,'(I6,1X,I6,A1,ES25.16,A1,ES25.16)') ISS,JSTA,' ',h_hfc_rms(ISS,JSTA)
-    end do
-  end do
-  close(Lu)
+  call molcas_open_ext2(Lu,'h_HFC_RMS.txt','SEQUENTIAL','FORMATTED',istatus,.false.,1,'REPLACE',is_error)
+  io_units = [Lu,u6]
+  write(u6,*)
 
-end subroutine save_h_rms
+  do i = 1, 2
+    IO = io_units(i)
+    if (is_error) then
+      call WarningMessage(1, "Failed to write h_HFC_rms.txt")
+      cycle
+    end if
+    write(IO,'(20X,A31)') 'Effective hyperfine hamiltonian'
+    write(IO,'(20X,A31)') 'over spin components of spin-free eigenstates (SFS)'
+    write(IO,'(1X,A)') repeat('-',70)
+    write(IO,'(4X,A2,4X,A2,3X,A3,4X,A2,4X,A2,3X,A3,4X,A9,4X,A9,5X,A8)') &
+    'I1','S1','MS1','I2','S2','MS2','Absolute'
+    do ISS=1,NSS
+      ISTATE = MAPST(ISS)
+      MPLET1 = MAPSP(ISS)
+      MSPROJ1 = MAPMS(ISS)
+      S1 = Half*real(MPLET1-1,kind=wp)
+      SM1 = Half*real(MSPROJ1,kind=wp)
+      do JSS=1,ISS
+        JSTATE = MAPST(JSS)
+        MPLET2 = MAPSP(JSS)
+        MSPROJ2 = MAPMS(JSS)
+        S2 = Half*real(MPLET2-1,kind=wp)
+        SM2 = Half*real(MSPROJ2,kind=wp)
+        write(IO,'(1X,I5,1X,F5.1,1X,F5.1,1X,I5,1X,F5.1,1X,F5.1,1X,ES25.16)') &
+        ISS,S1,SM1,JSS,S2,SM2,h_hfc_rms(ISS,JSS)
+      end do
+    end do
+    if (IO == Lu) close(Lu)
+  end do
+
+end subroutine save_and_print_h_rms
 
 subroutine calc_h_Zeeman(PROP)
 
