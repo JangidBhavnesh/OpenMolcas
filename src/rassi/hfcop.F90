@@ -1399,7 +1399,7 @@ end subroutine
 subroutine save_and_print_h_rms()
   logical(kind=iwp) :: is_error
   integer(kind=iwp), external :: IsFreeUnit
-  integer(kind=iwp) :: ISS, JSS, MPLET1, MPLET2, MSPROJ1, MSPROJ2, ISTATE, JSTATE, istatus, LU, io_units(2),i, IO
+  integer(kind=iwp) :: ISS, JSS, MPLET1, MPLET2, MSPROJ1, MSPROJ2, istatus, LU, io_units(2),i, IO
   real(kind=wp) :: S1, SM1, S2, SM2
 
   ! SAVE TO h_HFC_RMS.txt file
@@ -1425,13 +1425,11 @@ subroutine save_and_print_h_rms()
     write(IO,'(4X,A2,4X,A2,3X,A3,4X,A2,4X,A2,3X,A3,4X,A9,4X,A9,5X,A8)') &
     'I1','S1','MS1','I2','S2','MS2','Absolute'
     do ISS=1,NSS
-      ISTATE = MAPST(ISS)
       MPLET1 = MAPSP(ISS)
       MSPROJ1 = MAPMS(ISS)
       S1 = Half*real(MPLET1-1,kind=wp)
       SM1 = Half*real(MSPROJ1,kind=wp)
       do JSS=1,ISS
-        JSTATE = MAPST(JSS)
         MPLET2 = MAPSP(JSS)
         MSPROJ2 = MAPMS(JSS)
         S2 = Half*real(MPLET2-1,kind=wp)
