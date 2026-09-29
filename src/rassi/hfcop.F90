@@ -1443,7 +1443,7 @@ end subroutine
 subroutine save_and_print_h_rms()
   logical(kind=iwp) :: is_error
   integer(kind=iwp), external :: IsFreeUnit
-  integer(kind=iwp) :: ISS, JSS, MPLET1, MPLET2, MSPROJ1, MSPROJ2, ISTATE, JSTATE, istatus, LU, io_units(2),i, IO
+  integer(kind=iwp) :: ISS, JSS, MPLET1, MPLET2, MSPROJ1, MSPROJ2, istatus, LU, io_units(2),i, IO
   real(kind=wp) :: S1, SM1, S2, SM2
 
   ! SAVE TO h_HFC_RMS.txt file
