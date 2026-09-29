@@ -1405,7 +1405,7 @@ subroutine calc_h_PSO(iAtom,PROP)
       MPLET2 = MAPSP(JSS)
       MSPROJ2 = MAPMS(JSS)
       JSTATE = MAPST(JSS)
-      if (MPLET1 == MPLET2 .and. MSPROJ1 == MSPROJ2 .and. .not.(ISS == JSS))  &
+      if (MPLET1 == MPLET2 .and. MSPROJ1 == MSPROJ2)  &
        Im_h_PSO(:,ISS,JSS) = PROP(ISTATE,JSTATE,PSO_idx(iAtom,:))
     end do
   end do
