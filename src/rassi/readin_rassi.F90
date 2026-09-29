@@ -30,7 +30,6 @@ use Fock_util_global, only: Deco, Estimate, PseudoChoMOs, Update
 use frenkel_global_vars, only: DoCoul, doexch, DoExcitonics, excl, iTyp, labB, nestla, nestlb, valst
 use kVectors, only: e_Vector, k_Vector, nk_Vector
 use Lebedev_quadrature, only: available_table, rule_max
-use HFC_logical, only: MagX2C_Req
 use rassi_data, only: CHFRACMEM
 use rassi_global_arrays, only: ESHFT, HAM, HDIAG, JBNUM, LROOT
 use spool, only: Close_LuSpool, Spoolinp

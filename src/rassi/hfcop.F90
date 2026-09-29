@@ -697,7 +697,7 @@ end subroutine print_isotope_info
 
 subroutine get_HFSO_ener()
   real(kind=wp), allocatable :: h_hfsor(:,:), h_hfsoi(:,:), UR(:,:), UI(:,:)
-  integer(kind=iwp) :: ISS, JSS, ISTATE
+  integer(kind=iwp) :: ISS
   real(kind=wp) :: EHFSO, EMIN_HFSO
 
   call mma_allocate(h_hfsor, NSS,NSS,Label='hsor')
@@ -1469,13 +1469,11 @@ subroutine save_and_print_h_rms()
     write(IO,'(4X,A2,4X,A2,3X,A3,4X,A2,4X,A2,3X,A3,4X,A9,4X,A9,5X,A8)') &
     'I1','S1','MS1','I2','S2','MS2','Absolute'
     do ISS=1,NSS
-      ISTATE = MAPST(ISS)
       MPLET1 = MAPSP(ISS)
       MSPROJ1 = MAPMS(ISS)
       S1 = Half*real(MPLET1-1,kind=wp)
       SM1 = Half*real(MSPROJ1,kind=wp)
       do JSS=1,ISS
-        JSTATE = MAPST(JSS)
         MPLET2 = MAPSP(JSS)
         MSPROJ2 = MAPMS(JSS)
         S2 = Half*real(MPLET2-1,kind=wp)
