@@ -26,9 +26,9 @@ use RASSIWfn, only: wfn_h_hfc_rms
 use Molcas, only: LenIn
 use spin_data, only: free_spin_data, get_first_nonzero_GNUC, GNUC_by_nucspin, GNUC_NUCSPIN_by_nucmass, init_spin_data, &
                      NUCSPIN_by_gnuc
-use Cntrl, only: Atens_Req, AutoSel_GFac, DEGEN_ETHR, GNuc, GNuc_set, HypF_rms_Req, HypoIso, LCSTATES, &
+use Cntrl, only: Atens_Req, AutoSel_GFac, DEGEN_ETHR, GNuc, GNuc_set, HypF_rms_Req, HypoIso, LCSTATES, E_HFC_Req, &
                  LPRPR, MLTPLT, NATens_Calc, NAtoms, NCOUP, NMass_set, NPNMR_Calc, NPROP, NSpin_set, NSTATE, NTP, NucMass, &
-                 NucSpin, pNMR_req, TMAXP, TMINP, SDFlip, ICOMP, PNAME
+                 NucSpin, pNMR_req, TMAXP, TMINP, SDFlip, ICOMP, PNAME, EMIN
 use stdalloc, only: mma_allocate, mma_deallocate
 use Constants, only: Zero, One, Two, Three, Four, Twelve, Half, cZero, cOne, auTocm, auToHz, auTokJ, c_in_au, gElectron, &
                      kBoltzmann,proton_mass_in_au
@@ -111,6 +111,7 @@ subroutine Hyperfine_Oper(PROP,USOR,USOI,JBNUM)
 
   ! Printing final results------------------------------
   if (HypF_rms_Req) call save_and_print_h_rms()
+  if (E_HFC_Req) call diag_hfso()
   if (allocated(Atens_Req)) call print_EPR_summary()
   if (allocated(pNMR_req)) call print_pNMR_summary()
 
@@ -693,6 +694,44 @@ subroutine print_isotope_info()
   call mma_deallocate(NucMass)
 
 end subroutine print_isotope_info
+
+subroutine diag_hfso()
+  real(kind=wp), allocatable :: hsor(:,:), hsoi(:,:), UR(:,:), UI(:,:)
+  integer(kind=iwp) :: ISS, JSS, ISTATE
+  real(kind=wp) :: hfc_so_ener, Emin_hfso
+
+  call mma_allocate(hsor, NSS,NSS,Label='hsor')
+  call mma_allocate(hsoi, NSS,NSS,Label='hsoi')
+  call mma_allocate(UR, NSS,NSS,Label='UR')
+  call mma_allocate(UI, NSS,NSS,Label='UI')
+
+  hsor(:,:) = Zero
+  hsoi(:,:) = Zero
+
+  call Get_dArray('HAMSOR_SINGLE', hsor, NSS**2)
+  call Get_dArray('HAMSOI_SINGLE', hsoi, NSS**2)
+
+  UR(:,:) = Zero
+  UI(:,:) = Zero
+
+  hsor(:,:) = hsor(:,:) + h_hfc_rms(:,:)
+
+  call ZJAC(NSS,hsor,hsoi,NSS,UR,UI)
+
+  write(u6,*) "Total energies including spin-orbit and hyperfine coupling cm^-1"
+  write(u6,*) repeat('-', 58)
+  write(u6,'(9X,A14,A18,8X,A10)') 'SO State', 'HFC-SO State', 'Difference'
+  do ISS = 1, NSS
+    hfc_so_ener = hsor(ISS,ISS)*auTocm
+    write(u6,'(1X,I4,3(F18.4))')  ISS, ESO(ISS),  hfc_so_ener, ESO(ISS)-hfc_so_ener
+  end do
+
+  call mma_deallocate(hsor)
+  call mma_deallocate(hsoi)
+  call mma_deallocate(UR)
+  call mma_deallocate(UI)
+
+end subroutine diag_hfso
 
 subroutine print_pNMR_summary()
 
@@ -1362,7 +1401,8 @@ subroutine calc_h_PSO(iAtom,PROP)
       MPLET2 = MAPSP(JSS)
       MSPROJ2 = MAPMS(JSS)
       JSTATE = MAPST(JSS)
-      if (MPLET1 == MPLET2 .and. MSPROJ1 == MSPROJ2) Im_h_PSO(:,ISS,JSS) = PROP(ISTATE,JSTATE,PSO_idx(iAtom,:))
+      if (MPLET1 == MPLET2 .and. MSPROJ1 == MSPROJ2 .and. .not.(ISS == JSS))  &
+       Im_h_PSO(:,ISS,JSS) = PROP(ISTATE,JSTATE,PSO_idx(iAtom,:))
     end do
   end do
 

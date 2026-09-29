@@ -24,7 +24,7 @@ use Cntrl, only: AutoSel_GFac, BINA, CIH5, CITHR, DCHO, DCHS, DEGEN_ETHR, DIPR, 
                  NSOThr_Prt, NSpin_set, NSTATE, OCAN, ONLY_OVERLAPS, OSThr_DipR, OSThr_QIPR, PNAME, PRCI, PRDIPVEC, PRMEE, PRMER, &
                  PRMES, PRORB, PRRAW, PRSXY, PRTRA, PRWEIGHT, PRXVE, PRXVR, PRXVS, PTYPE, QIALL, QIPR, REDUCELOOP, RFPert, RSPR, &
                  RSThr, SODIAGNSTATE, SONATNSTATE, SONTOSTATES, SOPRNM, SOPRTP, SOThr_Prt, TDIPMIN, TDYS, TMGR_Thrs, ToFile, &
-                 TOLERANCE, TRACK
+                 TOLERANCE, TRACK, E_HFC_Req
 use rassi_data, only: WFTYPE
 use hfc_logical, only: MagX2C_Avail
 use Constants, only: Zero, One
@@ -182,6 +182,7 @@ NSpin_set = .false.
 GNuc_set = .false.
 HypF_rms_Req = .false.
 AutoSel_GFac = .true.
+E_HFC_Req = .false.
 
 ! K. Sharkas  BEG
 IFGTCALSA = .false.

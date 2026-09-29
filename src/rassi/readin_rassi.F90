@@ -25,7 +25,7 @@ use Cntrl, only: ALGO, ALPHZ, Atens_Req, AutoSel_GFac, BANGRES, BETAE, BINA, BIN
                  PRMER, PRMES, PRORB, PRRAW, PRSXY, PRTRA, PRWEIGHT, PRXVE, PRXVR, PRXVS, QDPT2EV, QDPT2SC, QIALL, QIPR,&
                  REDUCELOOP, RFPERT, RHODYN, RSPR, RSThr, SECOND_TIME, SODIAG, SODIAGNSTATE, SONAT, SONATNSTATE, SONTO, &
                  SONTOSTATES, SOPRNM, SOThr_Prt, TDIPMIN, TDYS, TINCRE, TMAXP, TMAXS, TMGR_Thrs, TMINP, TMINS, ToFile, TOLERANCE,&
-                 TRACK, TSTART, SDFlip
+                 TRACK, TSTART, SDFlip, E_HFC_Req
 use Fock_util_global, only: Deco, Estimate, PseudoChoMOs, Update
 use frenkel_global_vars, only: DoCoul, doexch, DoExcitonics, excl, iTyp, labB, nestla, nestlb, valst
 use kVectors, only: e_Vector, k_Vector, nk_Vector
@@ -659,6 +659,9 @@ do
         end do
         call mma_deallocate(iTemp_arr)
       end if
+
+    case ('EHFC')
+      E_HFC_Req = .true.
 
     case ('NMRA')
       call mma_allocate(pNMR_req,NAtoms,Label='pNMR_req')

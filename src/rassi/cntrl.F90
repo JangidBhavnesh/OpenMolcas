@@ -161,7 +161,8 @@ logical(kind=iwp) :: AutoSel_GFac, BINA, ChkHop, CIH5, DCHS, DIPR, Do_Pol, Do_SK
                      IFGTCALSA, IFGTSHSA, IFHAM, IFHCOM, IFHDIA, IFHEFF, IFHEXT, IFMCAL, IfNTO, IFSHFT, IFSO, IFTDM, IFTRD1, &
                      IFTRD2, IFVANVLECK, IFXCAL, LHAMI, LPRPR, NATO, NMass_set, NOHAM, NOSO, NSpin_set, ONLY_OVERLAPS, PRCI, &
                      PRDIPCOM, PRDIPVEC, PRMEE, PRMER, PRMES, PRORB, PRRAW, PRSXY, PRTRA, PRWEIGHT, PRXVE, PRXVR, PRXVS, QDPT2EV, &
-                     QDPT2SC, QIALL, QIPR, REDUCELOOP, RFpert, RHODyn, RSPR, SaveDens, SECOND_TIME, TDYS, ToFile, TRACK, SDFlip
+                     QDPT2SC, QIALL, QIPR, REDUCELOOP, RFpert, RHODyn, RSPR, SaveDens, SECOND_TIME, TDYS, ToFile, TRACK, SDFlip, &
+                     E_HFC_Req
 character(len=LenIn+8) :: bNAME(mxOrb)
 character(len=128) :: JBNAME(MXJOB), MINAME(MXJOB)
 character(len=16) :: OCAA(20)
@@ -187,6 +188,6 @@ public :: ALGO, AlphZ, Atens_Req, AutoSel_GFac, BAngRes, BetaE, BINA, BIncre, bN
           PRDIPCOM, PrDipVec, PRMEE, PRMER, PRMES, PRORB, PrRaw, PRSXY, PRTRA, PrWeight, PRXVE, PRXVR, PRXVS, PTYPE, &
           QDPT2EV, QDPT2SC, QIAll, QIPR, RASTYP, REDUCELOOP, RefEne, RFPert, RhoDyn, RSPR, RSThr, SAVEDENS, SECOND_TIME, SODIAG, &
           SODIAGNSTATE, SONAT, SONATNSTATE, SONTO, SONTOSTATES, SOPRNM, SOPRTP, SOThr_Prt, TDipMin, TDYS, TIncre, TITLE1, TMAXP, &
-          TMaxs, TMGR_Thrs, TMINP, TMins, ToFile, Tolerance, TRACK, TStart, SDFlip
+          TMaxs, TMGR_Thrs, TMINP, TMins, ToFile, Tolerance, TRACK, TStart, SDFlip, E_HFC_Req
 
 end module Cntrl
