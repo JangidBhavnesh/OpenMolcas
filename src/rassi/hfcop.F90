@@ -28,7 +28,7 @@ use spin_data, only: free_spin_data, get_first_nonzero_GNUC, GNUC_by_nucspin, GN
                      NUCSPIN_by_gnuc
 use Cntrl, only: Atens_Req, AutoSel_GFac, DEGEN_ETHR, GNuc, GNuc_set, HypF_rms_Req, HypoIso, LCSTATES, E_HFC_Req, &
                  LPRPR, MLTPLT, NATens_Calc, NAtoms, NCOUP, NMass_set, NPNMR_Calc, NPROP, NSpin_set, NSTATE, NTP, NucMass, &
-                 NucSpin, pNMR_req, TMAXP, TMINP, SDFlip, ICOMP, PNAME
+                 NucSpin, pNMR_req, TMAXP, TMINP, SDFlip, ICOMP, PNAME, IFSO
 use stdalloc, only: mma_allocate, mma_deallocate
 use Constants, only: Zero, One, Two, Three, Four, Twelve, Half, cZero, cOne, auTocm, auToHz, auTokJ, c_in_au, gElectron, &
                      kBoltzmann,proton_mass_in_au
@@ -696,7 +696,7 @@ subroutine print_isotope_info()
 end subroutine print_isotope_info
 
 subroutine get_HFSO_ener()
-  real(kind=wp), allocatable :: h_hfsor(:,:), h_hfsoi(:,:), UR(:,:), UI(:,:)
+  real(kind=wp), allocatable :: h_hfsor(:,:), h_hfsoi(:,:), UR(:,:), UI(:,:), ESF(:)
   integer(kind=iwp) :: ISS
   real(kind=wp) :: EHFSO, EMIN_HFSO
 
@@ -708,8 +708,17 @@ subroutine get_HFSO_ener()
   h_hfsor(:,:) = Zero
   h_hfsoi(:,:) = Zero
 
-  call Get_dArray('HAMSOR_SINGLE', h_hfsor, NSS**2)
-  call Get_dArray('HAMSOI_SINGLE', h_hfsoi, NSS**2)
+  if(IFSO) then
+    call Get_dArray('HAMSOR_SINGLE', h_hfsor, NSS**2)
+    call Get_dArray('HAMSOI_SINGLE', h_hfsoi, NSS**2)
+  else
+    call mma_allocate(ESF, NSTATE, Label='ESF')
+    call Get_dArray('ESFS_SINGLEAU', ESF, NSTATE)
+    do ISS = 1, NSS
+      h_hfsor(ISS,ISS) = ESF(MAPST(ISS))
+    end do
+    call mma_deallocate(ESF)
+  endif
 
   UR(:,:) = Zero
   UI(:,:) = Zero
@@ -722,13 +731,26 @@ subroutine get_HFSO_ener()
     h_hfsor(ISS,ISS) = h_hfsor(ISS,ISS) - EMIN_HFSO
   end do
 
-  write(u6,*) "Total energies including spin-orbit and hyperfine coupling cm^-1"
-  write(u6,*) repeat('-', 58)
-  write(u6,'(9X,A14,A18,8X,A10)') 'SO State', 'HFC-SO State', 'Difference'
-  do ISS = 1, NSS
-    EHFSO = h_hfsor(ISS,ISS)*auTocm
-    write(u6,'(1X,I4,3(F18.4))')  ISS, ESO(ISS),  EHFSO, ESO(ISS)-EHFSO
-  end do
+  if (IFSO) then
+    write(u6,*) "Total energies including spin-orbit and hyperfine coupling cm-1"
+    write(u6,*) repeat('-', 63)
+    write(u6,'(9X,A14,A18)') 'SO State', 'HFC-SO State'
+    do ISS = 1, NSS
+      EHFSO = h_hfsor(ISS,ISS)*auTocm
+      write(u6,'(1X,I4,3(F18.4))')  ISS, ESO(ISS),  EHFSO
+    end do
+  else
+    write(u6,*) "Total energies including hyperfine coupling cm-1"
+    write(u6,*) repeat('-', 48)
+    write(u6,'(9X,A14)') 'HFC State'
+    do ISS = 1, NSS
+      EHFSO = h_hfsor(ISS,ISS)*auTocm
+      write(u6,'(1X,I4,3(F18.4))')  ISS,  EHFSO
+    end do
+  endif
+
+  write(u6,*)
+  write(u6,*)
 
   call mma_deallocate(h_hfsor)
   call mma_deallocate(h_hfsoi)
