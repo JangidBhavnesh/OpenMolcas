@@ -374,11 +374,13 @@ subroutine calc_h_HFC(iAtom,PROP)
   if (HypF_rms_Req) call update_h_HFC_RMS(iAtom,h_TOT)
 
 ! TRANSFORM TO SPIN-ORIBT BASIS HAMILTONIAN
-  call to_cmpl_SO_states(h_FC)
-  call to_cmpl_SO_states(h_SD)
-  call to_cmpl_SO_states(h_FCSD)
-  call to_cmpl_SO_states(h_PSO)
-  call to_cmpl_SO_states(h_TOT)
+  if (IFSO) then
+    call to_cmpl_SO_states(h_FC)
+    call to_cmpl_SO_states(h_SD)
+    call to_cmpl_SO_states(h_FCSD)
+    call to_cmpl_SO_states(h_PSO)
+    call to_cmpl_SO_states(h_TOT)
+  end if
 
 ! PRINT SPIN-ORIBT BASIS HAMILTONIAN
   if (LPRPR) then
